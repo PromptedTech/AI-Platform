@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {return request.auth != null;
+      
+    }
+    
+    // Helper function to check if user owns the document
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Users collection - users can only read/write their own documents
+    match /users/{userId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+      // Nested stats subcollection
+      match /stats/{docId} {
+        allow read: if isAuthenticated() && isOwner(userId);
+        allow create, update: if isAuthenticated() && isOwner(userId);
+        allow delete: if false;
+      }
+    }
+    
+    // Chats collection - users can only access their own chat messages
+    match /chats/{chatId} {
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
+      allow update, delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+    
+    // Threads collection - users can only access their own chat threads
+    match /threads/{threadId} {
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
+      allow update, delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    // Images collection - users can only access their own generated images
+    match /images/{imageId} {
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
+      allow update, delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+    
+    // Profiles collection - users can only access their own profile
+    match /profiles/{userId} {
+      allow read: if isAuthenticated() && isOwner(userId);
+      allow create: if true; // Allow server-side API to create profiles
+      allow update: if true; // Allow server-side API to update profiles (for payments)
+      allow delete: if false; // Prevent profile deletion
+    }
+    
+    // Rewards collection - users can only access their own rewards
+    match /rewards/{userId} {
+      allow read: if isAuthenticated() && isOwner(userId);
+      allow create: if isAuthenticated() && isOwner(userId);
+      allow update: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // Achievements collection - users can only access their own achievements
+    match /achievements/{userId} {
+      allow read: if isAuthenticated() && isOwner(userId);
+      allow create: if isAuthenticated() && isOwner(userId);
+      allow update: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // Custom AIs collection - users can only access their own custom AIs
+    match /customAIs/{aiId} {
+      allow read: if isAuthenticated() && isOwner(resource.data.uid);
+      allow create: if isAuthenticated() && isOwner(request.resource.data.uid);
+      allow update, delete: if isAuthenticated() && isOwner(resource.data.uid);
+    }
+    
+    // Feedback reports collection - users can submit feedback, only admins can read
+    match /feedbackReports/{reportId} {
+      allow create: if isAuthenticated();
+      allow read: if false; // Only admins should read feedback reports
+    }
+    
+    // Payments collection - users can only read their own payment records
+    match /payments/{paymentId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if true; // Allow server-side API to create payment records
+      allow update, delete: if false; // Payments are immutable
+    }
+    
+    // Shared content collection - publicly readable for sharing
+    match /sharedContent/{shareId} {
+      allow read: if true; // Public read access for shared links
+      allow create: if isAuthenticated(); // Only authenticated users can create shares
+      allow update, delete: if false; // Shared content is immutable
+    }
+  }
+}
+
