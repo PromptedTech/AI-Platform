@@ -266,25 +266,57 @@ export default function Dashboard({ user }) {
     return () => unsubPersonas();
   }, [user]);
 
-  // Load messages for active thread from chat document
+  // Load messages for active thread
   useEffect(() => {
     if (!user || !activeThreadId) return;
     
+    // First try to load from new chat document format
     const chatRef = doc(db, 'chats', activeThreadId);
-    const unsub = onSnapshot(chatRef, (doc) => {
+    const unsubChat = onSnapshot(chatRef, (doc) => {
       if (doc.exists()) {
         const chatData = doc.data();
-        const messages = (chatData.messages || []).map((msg, index) => ({
-          role: msg.role,
-          content: msg.text,
-          timestamp: msg.timestamp,
-        }));
-        setMessages(messages);
-      } else {
-        setMessages([]);
+        if (chatData.messages && chatData.messages.length > 0) {
+          // New format: messages stored in single document
+          const messages = chatData.messages.map((msg, index) => ({
+            role: msg.role,
+            content: msg.text || msg.content,
+            timestamp: msg.timestamp,
+          }));
+          console.log('Loading messages from new format:', messages);
+          setMessages(messages);
+          return;
+        }
       }
+      
+      // If new format doesn't exist or is empty, load from old format
+      const qMsgs = query(
+        collection(db, 'chats'),
+        where('userId', '==', user.uid),
+        where('threadId', '==', activeThreadId),
+        orderBy('timestamp', 'asc')
+      );
+      
+      const unsubOld = onSnapshot(qMsgs, (snap) => {
+        const list = [];
+        snap.forEach((d) => {
+          const data = d.data();
+          // Skip if this is a chat document (has messages array)
+          if (!data.messages) {
+            list.push({ 
+              role: data.role, 
+              content: data.content, 
+              timestamp: data.timestamp 
+            });
+          }
+        });
+        console.log('Loading messages from old format:', list);
+        setMessages(list);
+      });
+      
+      return () => unsubOld();
     });
-    return () => unsub();
+    
+    return () => unsubChat();
   }, [user, activeThreadId]);
   const deriveTitle = (text) => {
     const t = (text || '').replace(/\n/g, ' ').trim();
