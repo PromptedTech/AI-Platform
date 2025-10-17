@@ -185,6 +185,9 @@ export default function Dashboard({ user }) {
   // Copy message functionality
   const [copiedMessageId, setCopiedMessageId] = useState(null);
   const [showCopyToast, setShowCopyToast] = useState(false);
+  
+  // Dropdown menu state
+  const [showMenu, setShowMenu] = useState(null);
 
   // Smooth scroll to bottom
   const scrollToBottom = () => {
