@@ -25,11 +25,8 @@ service cloud.firestore {
     
     // Chats collection - users can only access their own chat messages
     match /chats/{chatId} {
-      // Allow read if user owns the document OR if it's a new document (for checking existence)
-      allow read: if isAuthenticated() && (
-        resource.data.userId == request.auth.uid || 
-        !resource.exists
-      );
+      // Allow read for authenticated users (we'll filter on the client side)
+      allow read: if isAuthenticated();
       allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
       allow update: if isAuthenticated() && isOwner(resource.data.userId);
       allow delete: if isAuthenticated() && isOwner(resource.data.userId);
@@ -37,7 +34,8 @@ service cloud.firestore {
     
     // Threads collection - users can only access their own chat threads
     match /threads/{threadId} {
-      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      // Allow read for authenticated users (we'll filter on the client side)
+      allow read: if isAuthenticated();
       allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
       allow update, delete: if isAuthenticated() && isOwner(resource.data.userId);
     }

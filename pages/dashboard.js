@@ -275,7 +275,8 @@ export default function Dashboard({ user }) {
     const unsubChat = onSnapshot(chatRef, (doc) => {
       if (doc.exists()) {
         const chatData = doc.data();
-        if (chatData.messages && chatData.messages.length > 0) {
+        // Only load if this chat belongs to the current user
+        if (chatData.userId === user.uid && chatData.messages && chatData.messages.length > 0) {
           // New format: messages stored in single document
           const messages = chatData.messages.map((msg, index) => ({
             role: msg.role,
@@ -300,8 +301,8 @@ export default function Dashboard({ user }) {
         const list = [];
         snap.forEach((d) => {
           const data = d.data();
-          // Skip if this is a chat document (has messages array)
-          if (!data.messages) {
+          // Skip if this is a chat document (has messages array) or doesn't belong to user
+          if (!data.messages && data.userId === user.uid) {
             list.push({ 
               role: data.role, 
               content: data.content, 
@@ -311,9 +312,15 @@ export default function Dashboard({ user }) {
         });
         console.log('Loading messages from old format:', list);
         setMessages(list);
+      }, (error) => {
+        console.error('Error loading old format messages:', error);
+        setMessages([]);
       });
       
       return () => unsubOld();
+    }, (error) => {
+      console.error('Error loading chat document:', error);
+      setMessages([]);
     });
     
     return () => unsubChat();
