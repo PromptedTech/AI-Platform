@@ -108,6 +108,60 @@ const TypingMessage = ({ message, onComplete }) => {
   );
 };
 
+// Message Status Indicator Components
+const MessageStatusIndicator = ({ status, messageId, onRetry }) => {
+  const getStatusIcon = () => {
+    switch (status) {
+      case 'sending':
+        return (
+          <motion.div
+            className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          />
+        );
+      case 'success':
+        return (
+          <motion.div
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ duration: 0.3, type: "spring" }}
+            className="w-3 h-3 bg-green-500 rounded-full flex items-center justify-center"
+          >
+            <Check className="w-2 h-2 text-white" />
+          </motion.div>
+        );
+      case 'error':
+        return (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.2 }}
+            className="w-3 h-3 bg-red-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors"
+            onClick={onRetry}
+            title="Click to retry"
+          >
+            <X className="w-2 h-2 text-white" />
+          </motion.div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.8 }}
+      transition={{ duration: 0.2 }}
+      className="flex items-center justify-center"
+    >
+      {getStatusIcon()}
+    </motion.div>
+  );
+};
+
 export default function Dashboard({ user }) {
   const { isDark, toggleTheme } = useTheme();
   const router = useRouter();
@@ -222,6 +276,10 @@ export default function Dashboard({ user }) {
   
   // Timestamp refresh state
   const [timestampRefresh, setTimestampRefresh] = useState(0);
+  
+  // Message status tracking
+  const [messageStatuses, setMessageStatuses] = useState({});
+  const [pendingMessageId, setPendingMessageId] = useState(null);
 
   // Refresh timestamps every minute
   useEffect(() => {
@@ -416,6 +474,107 @@ export default function Dashboard({ user }) {
     }
   };
 
+  // Retry failed message
+  const retryMessage = async (messageId) => {
+    const message = messages.find(msg => msg.id === messageId);
+    if (!message || !user) return;
+
+    // Reset status to sending
+    setMessageStatuses(prev => ({ ...prev, [messageId]: 'sending' }));
+    setPendingMessageId(messageId);
+    setChatError('');
+
+    try {
+      // Get current chat document and update it
+      const threadId = await ensureActiveThread();
+      const chatRef = doc(db, 'chats', threadId);
+      const chatDoc = await getDoc(chatRef);
+      const nowIso = new Date().toISOString();
+      
+      if (chatDoc.exists()) {
+        const currentMessages = chatDoc.data().messages || [];
+        
+        // Add user message
+        const updatedMessages = [
+          ...currentMessages,
+          {
+            role: 'user',
+            text: message.content,
+            timestamp: nowIso,
+          }
+        ];
+        
+        // Generate title from first message if it's still "New Chat"
+        let title = chatDoc.data().title;
+        if (title === 'New Chat' && currentMessages.length === 0) {
+          title = deriveTitle(message.content);
+        }
+        
+        await updateDoc(chatRef, {
+          messages: updatedMessages,
+          title: title,
+          updatedAt: nowIso,
+        });
+        
+        // Also update the threads collection
+        const tRef = doc(db, 'threads', threadId);
+        await updateDoc(tRef, {
+          title: title,
+          updatedAt: nowIso,
+        });
+      }
+
+      // Make API call
+      const response = await axios.post('/api/chat', {
+        message: message.content,
+        model: chatModel,
+        customPrompt: selectedCustomAI ? await getCustomAIPrompt() : '',
+        recentMessages: await getRecentMessages(),
+      });
+
+      // Mark as successful
+      setMessageStatuses(prev => ({ ...prev, [messageId]: 'success' }));
+      setPendingMessageId(null);
+
+      // Add AI response
+      const assistantMessage = {
+        role: 'assistant',
+        content: response.data.reply,
+        timestamp: new Date().toISOString(),
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+
+      // Save AI response to Firestore
+      const assistantTimestamp = new Date().toISOString();
+      const finalChatRef = doc(db, 'chats', threadId);
+      const finalChatDoc = await getDoc(finalChatRef);
+      
+      if (finalChatDoc.exists()) {
+        const currentMessages = finalChatDoc.data().messages || [];
+        const updatedMessages = [
+          ...currentMessages,
+          {
+            role: 'ai',
+            text: response.data.reply,
+            timestamp: assistantTimestamp,
+          }
+        ];
+        
+        await updateDoc(finalChatRef, {
+          messages: updatedMessages,
+          updatedAt: assistantTimestamp,
+        });
+      }
+
+    } catch (error) {
+      console.error('Error retrying message:', error);
+      setMessageStatuses(prev => ({ ...prev, [messageId]: 'error' }));
+      setPendingMessageId(null);
+      setChatError('Failed to retry message. Please try again.');
+    }
+  };
+
   const ensureActiveThread = async () => {
     if (activeThreadId) return activeThreadId;
     // Create a new thread
@@ -593,11 +752,19 @@ export default function Dashboard({ user }) {
     const originalCredits = credits;
     setCredits((prev) => (typeof prev === 'number' ? Math.max(prev - 1, 0) : prev));
 
-    const userMessage = { role: 'user', content: chatInput };
+    const messageId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const userMessage = { 
+      role: 'user', 
+      content: chatInput,
+      id: messageId,
+      timestamp: new Date().toISOString()
+    };
     const threadId = await ensureActiveThread();
     const updatedMessages = [...messages, userMessage];
     // Optimistically render user's message
     setMessages(updatedMessages);
+    setMessageStatuses(prev => ({ ...prev, [messageId]: 'sending' }));
+    setPendingMessageId(messageId);
     setChatInput('');
     setChatLoading(true);
     // start timing
@@ -702,6 +869,11 @@ export default function Dashboard({ user }) {
       
       // Add assistant message with typing flag
       setMessages([...updatedMessages, { ...assistantMessage, isTyping: true }]);
+      
+      // Mark user message as successful
+      setMessageStatuses(prev => ({ ...prev, [messageId]: 'success' }));
+      setPendingMessageId(null);
+      
       // capture total time
       const totalSecs = Math.max(1, Math.floor((Date.now() - thinkStartRef.current) / 1000));
       setLastResponseTime(totalSecs);
@@ -716,6 +888,11 @@ export default function Dashboard({ user }) {
     } catch (error) {
       console.error('Error sending message:', error);
       setChatError('Failed to send message. Please try again.');
+      
+      // Mark user message as error
+      setMessageStatuses(prev => ({ ...prev, [messageId]: 'error' }));
+      setPendingMessageId(null);
+      
       // Refund credit on error
       setCredits(originalCredits);
       try {
@@ -1707,9 +1884,9 @@ export default function Dashboard({ user }) {
                                 </motion.button>
                               </div>
                               
-                              {/* Timestamp */}
-                              <div className={`text-xs px-2 ${
-                                message.role === 'user' ? 'text-right' : 'text-left'
+                              {/* Timestamp and Status */}
+                              <div className={`text-xs px-2 flex items-center gap-2 ${
+                                message.role === 'user' ? 'text-right justify-end' : 'text-left justify-start'
                               }`}>
                                 <motion.span
                                   key={`${message.timestamp}-${timestampRefresh}`}
@@ -1722,6 +1899,15 @@ export default function Dashboard({ user }) {
                                 >
                                   {formatTimestamp(message.timestamp)}
                                 </motion.span>
+                                
+                                {/* Status Indicator for User Messages */}
+                                {message.role === 'user' && message.id && (
+                                  <MessageStatusIndicator
+                                    status={messageStatuses[message.id] || 'success'}
+                                    messageId={message.id}
+                                    onRetry={() => retryMessage(message.id)}
+                                  />
+                                )}
                               </div>
                             </div>
 
