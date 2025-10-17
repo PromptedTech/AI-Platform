@@ -176,6 +176,24 @@ export default function Dashboard({ user }) {
   // Navigation state
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [inputPulse, setInputPulse] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  // Smooth scroll to bottom
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'end'
+      });
+    }
+  };
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    const timer = setTimeout(scrollToBottom, 100);
+    return () => clearTimeout(timer);
+  }, [messages, isTyping]);
   
   // Image generation state
   const [imagePrompt, setImagePrompt] = useState('');
@@ -401,7 +419,13 @@ export default function Dashboard({ user }) {
   // Handle chat submission
   const handleChatSubmit = async (e) => {
     e.preventDefault();
-    if (!chatInput.trim() || !user) return;
+    if (!chatInput.trim()) {
+      // Pulse animation for empty input
+      setInputPulse(true);
+      setTimeout(() => setInputPulse(false), 300);
+      return;
+    }
+    if (!user) return;
 
     setChatError('');
     setLastResponseTime(null);
@@ -874,53 +898,106 @@ export default function Dashboard({ user }) {
 
           {/* Navigation Items */}
           <div className="p-3 space-y-1">
-            <button
+            <motion.button
               onClick={() => setActiveTab('chat')}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              whileHover={{ 
+                scale: 1.02,
+                x: sidebarCollapsed ? 0 : 4
+              }}
+              whileTap={{ scale: 0.98 }}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 activeTab === 'chat'
-                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 shadow-sm'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-sm'
               }`}
               title={sidebarCollapsed ? 'Chat' : ''}
             >
-              <MessageSquare className="w-5 h-5 flex-shrink-0" />
+              <motion.div
+                animate={{
+                  scale: activeTab === 'chat' ? [1, 1.1, 1] : 1,
+                  rotate: activeTab === 'chat' ? [0, 5, -5, 0] : 0
+                }}
+                transition={{
+                  duration: 0.5,
+                  ease: "easeInOut"
+                }}
+              >
+                <MessageSquare className="w-5 h-5 flex-shrink-0" />
+              </motion.div>
               {!sidebarCollapsed && <span>Chat</span>}
-            </button>
+            </motion.button>
             
-            <button
+            <motion.button
               onClick={() => setActiveTab('image')}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              whileHover={{ 
+                scale: 1.02,
+                x: sidebarCollapsed ? 0 : 4
+              }}
+              whileTap={{ scale: 0.98 }}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 activeTab === 'image'
-                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 shadow-sm'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-sm'
               }`}
               title={sidebarCollapsed ? 'Image Generator' : ''}
             >
-              <ImageIcon className="w-5 h-5 flex-shrink-0" />
+              <motion.div
+                animate={{
+                  scale: activeTab === 'image' ? [1, 1.1, 1] : 1,
+                  rotate: activeTab === 'image' ? [0, 5, -5, 0] : 0
+                }}
+                transition={{
+                  duration: 0.5,
+                  ease: "easeInOut"
+                }}
+              >
+                <ImageIcon className="w-5 h-5 flex-shrink-0" />
+              </motion.div>
               {!sidebarCollapsed && <span>Image Generator</span>}
-            </button>
+            </motion.button>
             
-            <button
+            <motion.button
               onClick={() => setActiveTab('library')}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              whileHover={{ 
+                scale: 1.02,
+                x: sidebarCollapsed ? 0 : 4
+              }}
+              whileTap={{ scale: 0.98 }}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 activeTab === 'library'
-                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 shadow-sm'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-sm'
               }`}
               title={sidebarCollapsed ? 'Library' : ''}
             >
-              <Library className="w-5 h-5 flex-shrink-0" />
+              <motion.div
+                animate={{
+                  scale: activeTab === 'library' ? [1, 1.1, 1] : 1,
+                  rotate: activeTab === 'library' ? [0, 5, -5, 0] : 0
+                }}
+                transition={{
+                  duration: 0.5,
+                  ease: "easeInOut"
+                }}
+              >
+                <Library className="w-5 h-5 flex-shrink-0" />
+              </motion.div>
               {!sidebarCollapsed && <span>Library</span>}
-            </button>
-            
-            <button
+            </motion.button>
+
+            <motion.button
               onClick={() => router.push('/my-ais')}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              whileHover={{ 
+                scale: 1.02,
+                x: sidebarCollapsed ? 0 : 4
+              }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 hover:shadow-sm"
               title={sidebarCollapsed ? 'My AIs' : ''}
             >
               <User className="w-5 h-5 flex-shrink-0" />
               {!sidebarCollapsed && <span>My AIs</span>}
-            </button>
+            </motion.button>
           </div>
 
           {/* Divider */}
@@ -928,16 +1005,47 @@ export default function Dashboard({ user }) {
 
           {/* New Chat Button */}
           <div className="p-3">
-            <button 
-              onClick={handleNewChat} 
-              className="w-full flex items-center gap-3 px-3 py-2 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+            <motion.button 
+              onClick={handleNewChat}
+              whileHover={{ 
+                scale: 1.02,
+                boxShadow: "0 8px 25px rgba(147, 51, 234, 0.3)"
+              }}
+              whileTap={{ scale: 0.98 }}
+              animate={{
+                boxShadow: [
+                  "0 4px 15px rgba(147, 51, 234, 0.2)",
+                  "0 6px 20px rgba(147, 51, 234, 0.3)",
+                  "0 4px 15px rgba(147, 51, 234, 0.2)"
+                ]
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-all duration-200"
               title={sidebarCollapsed ? 'New Chat' : ''}
             >
-              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <motion.svg 
+                className="w-5 h-5 flex-shrink-0" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+                animate={{
+                  rotate: [0, 90, 0],
+                  scale: [1, 1.1, 1]
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
+              </motion.svg>
               {!sidebarCollapsed && <span className="font-medium">New Chat</span>}
-            </button>
+            </motion.button>
           </div>
 
           {/* Search Chats */}
@@ -1336,6 +1444,9 @@ export default function Dashboard({ user }) {
                       </motion.div>
                     )}
                   </AnimatePresence>
+                  
+                  {/* Scroll anchor */}
+                  <div ref={messagesEndRef} />
                 </div>
               </div>
 
@@ -1426,13 +1537,13 @@ export default function Dashboard({ user }) {
                   <form onSubmit={handleChatSubmit} className="relative px-6 pb-6">
                     <div className="flex items-end gap-3">
                       <div className="flex-1 relative">
-                        <textarea
+                        <motion.textarea
                           value={chatInput}
                           onChange={(e) => setChatInput(e.target.value)}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
                               e.preventDefault();
-                              if (!chatLoading && chatInput.trim() && credits >= 1) {
+                              if (!chatLoading && credits >= 1) {
                                 handleChatSubmit(e);
                               }
                             }
@@ -1440,6 +1551,14 @@ export default function Dashboard({ user }) {
                           placeholder="Type your message... (Enter to send, Shift+Enter for new line)"
                           disabled={chatLoading}
                           rows={1}
+                          animate={{
+                            scale: inputPulse ? [1, 1.02, 1] : 1,
+                            borderColor: inputPulse ? ["rgba(147, 51, 234, 0.3)", "rgba(147, 51, 234, 0.8)", "rgba(147, 51, 234, 0.3)"] : "rgba(147, 51, 234, 0.3)"
+                          }}
+                          transition={{
+                            duration: 0.3,
+                            ease: "easeInOut"
+                          }}
                           className="w-full px-4 py-3 pr-12 glass border-glass rounded-2xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent disabled:opacity-50 resize-none transition-all duration-200"
                           style={{
                             minHeight: '48px',
@@ -1461,13 +1580,54 @@ export default function Dashboard({ user }) {
                       <motion.button
                         type="submit"
                         disabled={chatLoading || !chatInput.trim() || credits < 1}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-2xl hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg"
+                        whileHover={{ 
+                          scale: 1.05,
+                          boxShadow: "0 10px 25px rgba(147, 51, 234, 0.4)"
+                        }}
+                        whileTap={{ 
+                          scale: 0.95,
+                          transition: { duration: 0.1 }
+                        }}
+                        animate={{
+                          background: chatInput.trim() 
+                            ? ["linear-gradient(135deg, #8b5cf6, #4f46e5)", "linear-gradient(135deg, #a855f7, #6366f1)", "linear-gradient(135deg, #8b5cf6, #4f46e5)"]
+                            : "linear-gradient(135deg, #8b5cf6, #4f46e5)"
+                        }}
+                        transition={{
+                          duration: 0.3,
+                          ease: "easeInOut"
+                        }}
+                        className="flex items-center justify-center w-12 h-12 text-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg relative overflow-hidden"
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-purple-500 to-indigo-600"
+                          animate={{
+                            scale: chatInput.trim() ? [1, 1.1, 1] : 1,
+                            opacity: chatInput.trim() ? [1, 0.8, 1] : 1
+                          }}
+                          transition={{
+                            duration: 0.6,
+                            ease: "easeInOut",
+                            repeat: chatInput.trim() ? Infinity : 0,
+                            repeatDelay: 2
+                          }}
+                        />
+                        <motion.svg 
+                          className="w-5 h-5 relative z-10" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                          animate={{
+                            rotate: chatInput.trim() ? [0, 5, -5, 0] : 0,
+                            scale: chatInput.trim() ? [1, 1.1, 1] : 1
+                          }}
+                          transition={{
+                            duration: 0.4,
+                            ease: "easeInOut"
+                          }}
+                        >
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                        </svg>
+                        </motion.svg>
                       </motion.button>
                     </div>
                     
