@@ -16,6 +16,37 @@ import { MessageSquare, Image as ImageIcon, Sparkles, Library, User, Coins, Cloc
 import FeedbackModal from '../components/FeedbackModal';
 import ShareButton from '../components/ShareButton';
 
+// Timestamp utility functions
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return '';
+  
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+  
+  if (diffInMinutes < 1) return 'Just now';
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+  if (diffInMinutes < 10080) return `${Math.floor(diffInMinutes / 1440)}d ago`;
+  
+  // For older messages, show HH:mm format
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
+const formatFullTimestamp = (timestamp) => {
+  if (!timestamp) return '';
+  
+  const date = new Date(timestamp);
+  return date.toLocaleString([], {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+};
+
 // Typing Animation Component
 const TypingAnimation = () => (
   <motion.div
@@ -188,6 +219,18 @@ export default function Dashboard({ user }) {
   
   // Dropdown menu state
   const [showMenu, setShowMenu] = useState(null);
+  
+  // Timestamp refresh state
+  const [timestampRefresh, setTimestampRefresh] = useState(0);
+
+  // Refresh timestamps every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimestampRefresh(prev => prev + 1);
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Smooth scroll to bottom
   const scrollToBottom = () => {
@@ -281,7 +324,7 @@ export default function Dashboard({ user }) {
           const messages = chatData.messages.map((msg, index) => ({
             role: msg.role,
             content: msg.text || msg.content,
-            timestamp: msg.timestamp,
+            timestamp: msg.timestamp || new Date().toISOString(),
           }));
           console.log('Loading messages from new format:', messages);
           setMessages(messages);
@@ -306,7 +349,7 @@ export default function Dashboard({ user }) {
             list.push({ 
               role: data.role, 
               content: data.content, 
-              timestamp: data.timestamp 
+              timestamp: data.timestamp || new Date().toISOString()
             });
           }
         });
@@ -1665,10 +1708,20 @@ export default function Dashboard({ user }) {
                               </div>
                               
                               {/* Timestamp */}
-                              <div className={`text-xs text-gray-500 dark:text-gray-400 px-2 ${
+                              <div className={`text-xs px-2 ${
                                 message.role === 'user' ? 'text-right' : 'text-left'
                               }`}>
-                                {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                <motion.span
+                                  key={`${message.timestamp}-${timestampRefresh}`}
+                                  className="text-white/60 hover:text-white/80 transition-colors duration-200 cursor-help"
+                                  title={formatFullTimestamp(message.timestamp)}
+                                  whileHover={{ scale: 1.05 }}
+                                  initial={{ opacity: 0.6 }}
+                                  animate={{ opacity: 1 }}
+                                  transition={{ duration: 0.2 }}
+                                >
+                                  {formatTimestamp(message.timestamp)}
+                                </motion.span>
                               </div>
                             </div>
 
