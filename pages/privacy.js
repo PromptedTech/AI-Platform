@@ -34,7 +34,43 @@ export default function PrivacyPolicy() {
               Last updated: October 15, 2025
             </p>
 
-            <div className={`prose ${isDark ? 'prose-invert' : ''} max-w-none`}>
+            <div className="max-w-none">
+              <style jsx>{`
+                .privacy-content {
+                  color: ${isDark ? '#e5e7eb' : '#374151'};
+                  line-height: 1.7;
+                }
+                .privacy-content h2 {
+                  color: ${isDark ? '#f9fafb' : '#111827'};
+                  font-size: 1.5rem;
+                  font-weight: 700;
+                  margin-top: 2rem;
+                  margin-bottom: 1rem;
+                }
+                .privacy-content h3 {
+                  color: ${isDark ? '#f3f4f6' : '#1f2937'};
+                  font-size: 1.25rem;
+                  font-weight: 600;
+                  margin-top: 1.5rem;
+                  margin-bottom: 0.75rem;
+                }
+                .privacy-content p {
+                  color: ${isDark ? '#d1d5db' : '#4b5563'};
+                  margin-bottom: 1rem;
+                }
+                .privacy-content ul {
+                  margin-bottom: 1rem;
+                }
+                .privacy-content li {
+                  color: ${isDark ? '#d1d5db' : '#4b5563'};
+                  margin-bottom: 0.5rem;
+                }
+                .privacy-content strong {
+                  color: ${isDark ? '#f3f4f6' : '#1f2937'};
+                  font-weight: 600;
+                }
+              `}</style>
+              <div className="privacy-content">
               <h2>1. Introduction</h2>
               <p>
                 Welcome to AI Platform ("we," "our," or "us"). We respect your privacy and are committed to protecting your personal data. This privacy policy will inform you about how we look after your personal data when you visit our website and tell you about your privacy rights.
@@ -131,6 +167,7 @@ export default function PrivacyPolicy() {
               <p>
                 California residents have specific rights under the CCPA, including the right to know what personal information is collected and the right to request deletion.
               </p>
+              </div>
             </div>
           </div>
         </div>

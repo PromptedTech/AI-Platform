@@ -34,7 +34,43 @@ export default function TermsOfService() {
               Last updated: October 15, 2025
             </p>
 
-            <div className={`prose ${isDark ? 'prose-invert' : ''} max-w-none`}>
+            <div className="max-w-none">
+              <style jsx>{`
+                .terms-content {
+                  color: ${isDark ? '#e5e7eb' : '#374151'};
+                  line-height: 1.7;
+                }
+                .terms-content h2 {
+                  color: ${isDark ? '#f9fafb' : '#111827'};
+                  font-size: 1.5rem;
+                  font-weight: 700;
+                  margin-top: 2rem;
+                  margin-bottom: 1rem;
+                }
+                .terms-content h3 {
+                  color: ${isDark ? '#f3f4f6' : '#1f2937'};
+                  font-size: 1.25rem;
+                  font-weight: 600;
+                  margin-top: 1.5rem;
+                  margin-bottom: 0.75rem;
+                }
+                .terms-content p {
+                  color: ${isDark ? '#d1d5db' : '#4b5563'};
+                  margin-bottom: 1rem;
+                }
+                .terms-content ul {
+                  margin-bottom: 1rem;
+                }
+                .terms-content li {
+                  color: ${isDark ? '#d1d5db' : '#4b5563'};
+                  margin-bottom: 0.5rem;
+                }
+                .terms-content strong {
+                  color: ${isDark ? '#f3f4f6' : '#1f2937'};
+                  font-weight: 600;
+                }
+              `}</style>
+              <div className="terms-content">
               <h2>1. Acceptance of Terms</h2>
               <p>
                 By accessing and using AI Platform ("the Service"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to these terms, please do not use the Service.
@@ -195,6 +231,7 @@ export default function TermsOfService() {
               <p>
                 These terms constitute the entire agreement between you and AI Platform regarding the use of the Service.
               </p>
+              </div>
             </div>
           </div>
         </div>
