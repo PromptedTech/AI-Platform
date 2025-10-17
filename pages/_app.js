@@ -30,15 +30,17 @@ function AppContent({ Component, pageProps }) {
     );
   }
 
-  return <Component {...pageProps} user={user} />;
+  return (
+    <ThemeProvider user={user}>
+      <Component {...pageProps} user={user} />
+    </ThemeProvider>
+  );
 }
 
 export default function App(props) {
   return (
     <AuthProvider>
-      <ThemeProvider>
-        <AppContent {...props} />
-      </ThemeProvider>
+      <AppContent {...props} />
     </AuthProvider>
   );
 }

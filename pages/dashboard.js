@@ -7,12 +7,13 @@ import { auth, db } from '../lib/firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, where, doc, setDoc, updateDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { trackChat, trackImage } from '../lib/analytics';
 import { useTheme } from '../contexts/ThemeContext';
+import ThemeSelector from '../components/ThemeSelector';
 import axios from 'axios';
 import { getChatTemplates, getImageTemplates } from '../lib/templates';
 import { getUserCredits, deductCredits } from '../lib/credits';
 import CreditsModal from '../components/CreditsModal';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Image as ImageIcon, Sparkles, Library, User, Coins, Clock, Zap, Bug, Menu, X, Home, Settings, LogOut, ChevronLeft, ChevronRight, Plus, Search, MoreVertical, Edit3, Trash2, Calendar, Clipboard, Check } from 'lucide-react';
+import { MessageSquare, Image as ImageIcon, Sparkles, Library, User, Coins, Clock, Zap, Bug, Menu, X, Home, Settings, LogOut, ChevronLeft, ChevronRight, Plus, Search, MoreVertical, Edit3, Trash2, Calendar, Clipboard, Check, Paperclip, Mic, Send } from 'lucide-react';
 import FeedbackModal from '../components/FeedbackModal';
 import ShareButton from '../components/ShareButton';
 
@@ -53,26 +54,26 @@ const TypingAnimation = () => (
     initial={{ opacity: 0, scale: 0.8 }}
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 0.8 }}
-    className="flex items-center gap-3 px-5 py-4 bg-white/90 dark:bg-slate-700/90 rounded-2xl border border-slate-200/50 dark:border-slate-600/50 shadow-sm backdrop-blur-sm"
+    className="flex items-center gap-3 px-5 py-4 rounded-2xl border shadow-sm transition-all duration-400 bg-[#121620] border-[#1f2532] text-[#e5e7eb]"
   >
     <div className="flex space-x-1">
       <motion.div
-        className="w-2 h-2 bg-blue-400 rounded-full"
+        className="w-2 h-2 rounded-full bg-[#8b5cf6]"
         animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
         transition={{ duration: 0.8, repeat: Infinity, delay: 0 }}
       />
       <motion.div
-        className="w-2 h-2 bg-blue-400 rounded-full"
+        className="w-2 h-2 rounded-full bg-[#8b5cf6]"
         animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
         transition={{ duration: 0.8, repeat: Infinity, delay: 0.2 }}
       />
       <motion.div
-        className="w-2 h-2 bg-blue-400 rounded-full"
+        className="w-2 h-2 rounded-full bg-[#8b5cf6]"
         animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
         transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}
       />
     </div>
-    <span className="text-sm text-slate-600 dark:text-slate-300 font-medium">AI is thinking...</span>
+    <span className="text-sm text-[#9ca3af] font-medium">AI is thinking...</span>
   </motion.div>
 );
 
@@ -95,11 +96,11 @@ const TypingMessage = ({ message, onComplete }) => {
   }, [currentIndex, message, onComplete]);
 
   return (
-    <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-p:text-gray-800 dark:prose-p:text-gray-200 prose-code:text-gray-900 dark:prose-code:text-gray-100 prose-pre:bg-gray-100 dark:prose-pre:bg-gray-800">
+    <div className="prose prose-sm max-w-none prose-headings:text-[#e5e7eb] prose-p:text-[#e5e7eb] prose-code:text-[#e5e7eb] prose-code:bg-[#1f2532] prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-[#121620] prose-pre:text-[#e5e7eb] prose-pre:border prose-pre:border-[#1f2532]">
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayedText}</ReactMarkdown>
       {currentIndex < message.length && (
         <motion.span
-          className="inline-block w-2 h-4 bg-primary-500 ml-1"
+          className="inline-block w-2 h-4 bg-[#8b5cf6] ml-1"
           animate={{ opacity: [0, 1, 0] }}
           transition={{ duration: 0.8, repeat: Infinity }}
         />
@@ -284,6 +285,9 @@ export default function Dashboard({ user }) {
   // Message status tracking
   const [messageStatuses, setMessageStatuses] = useState({});
   const [pendingMessageId, setPendingMessageId] = useState(null);
+  
+  // Theme selector state
+  const [isThemeSelectorOpen, setIsThemeSelectorOpen] = useState(false);
 
   // Refresh timestamps every minute
   useEffect(() => {
@@ -1008,11 +1012,11 @@ export default function Dashboard({ user }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900 transition-all duration-500">
+    <div className="min-h-screen transition-all duration-400" style={{ background: 'var(--bg-gradient)' }}>
       {/* Skip Link */}
       <a 
         href="#main-content" 
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:rounded-lg focus:font-medium"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-[#121620] focus:text-[#e5e7eb] focus:rounded-lg focus:font-medium focus:border focus:border-[#1f2532]"
       >
         Skip to main content
       </a>
@@ -1021,7 +1025,12 @@ export default function Dashboard({ user }) {
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 shadow-sm"
+        className="sticky top-0 z-50 border-b shadow-sm transition-all duration-400"
+        style={{ 
+          backgroundColor: 'var(--topbar-bg)', 
+          borderColor: 'var(--border-color)',
+          opacity: '0.9'
+        }}
         role="banner"
       >
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
@@ -1119,6 +1128,19 @@ export default function Dashboard({ user }) {
                 title="Report Bug / Feedback"
               >
                 <Bug className="w-5 h-5" />
+              </motion.button>
+
+              {/* Theme Button */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsThemeSelectorOpen(true)}
+                className="p-2 text-white/80 hover:text-white hover:glass rounded-lg transition-all duration-200"
+                title="Change Theme"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z" />
+                </svg>
               </motion.button>
 
               {/* Profile Button */}
@@ -1343,7 +1365,12 @@ export default function Dashboard({ user }) {
         <motion.aside
           initial={{ width: 256 }}
           animate={{ width: sidebarCollapsed ? 64 : 256 }}
-          className="shrink-0 hidden md:flex md:flex-col bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 h-[calc(100vh-180px)] transition-all duration-300 overflow-hidden"
+          className="shrink-0 hidden md:flex md:flex-col backdrop-blur-xl rounded-2xl shadow-xl border h-[calc(100vh-180px)] transition-all duration-400 overflow-hidden"
+          style={{ 
+            backgroundColor: 'var(--sidebar-bg)', 
+            borderColor: 'var(--border-color)',
+            opacity: '0.9'
+          }}
           role="complementary"
           aria-label="Chat navigation sidebar"
         >
@@ -1537,15 +1564,15 @@ export default function Dashboard({ user }) {
 
           {/* Search Chats */}
           {!sidebarCollapsed && (
-            <div className="px-3 py-2 border-t border-white/20">
+            <div className="px-3 py-2 border-t border-[#1f2532]">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#9ca3af]" />
                 <input
                   type="text"
                   placeholder="Search chats"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2.5 text-sm bg-white/10 text-white placeholder-white/60 border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/20 transition-all duration-200 backdrop-blur-sm"
+                  className="w-full pl-10 pr-3 py-2.5 text-sm bg-[#1a1f29] text-[#e5e7eb] placeholder-[#9ca3af] border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8b5cf6] focus:bg-[#121620] transition-all duration-200"
                 />
               </div>
             </div>
@@ -1557,7 +1584,7 @@ export default function Dashboard({ user }) {
               {threads.filter(t => 
                 !searchQuery || (t.title || 'New Chat').toLowerCase().includes(searchQuery.toLowerCase())
               ).length === 0 ? (
-                <div className="text-xs text-gray-500 dark:text-gray-400 p-2">
+                <div className="text-xs text-[#9ca3af] p-2">
                   {searchQuery ? 'No matching chats' : 'No chats yet'}
                 </div>
               ) : (
@@ -1712,7 +1739,10 @@ export default function Dashboard({ user }) {
         <div className="flex-1 min-w-0">
           {activeTab === 'chat' ? (
             // Modern Chat Interface
-            <div className="relative w-full h-[calc(100vh-180px)] overflow-hidden bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50">
+            <div className="relative w-full h-[calc(100vh-180px)] overflow-hidden backdrop-blur-xl rounded-2xl shadow-xl border transition-all duration-400" style={{ 
+              backgroundColor: 'var(--glass-bg)', 
+              borderColor: 'var(--border-color)'
+            }}>
             {/* Background with subtle gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-purple-500/10 rounded-xl"></div>
             
@@ -1761,13 +1791,13 @@ export default function Dashboard({ user }) {
               </AnimatePresence>
 
               {/* Messages Container */}
-              <div 
-                className="flex-1 overflow-y-auto px-6 py-6"
-                role="log"
-                aria-label="Chat messages"
-                aria-live="polite"
-                aria-atomic="false"
-              >
+                <div 
+                  className="flex-1 overflow-y-auto px-6 py-6"
+                  role="log"
+                  aria-label="Chat messages"
+                  aria-live="polite"
+                  aria-atomic="false"
+                >
                 <div className="max-w-4xl mx-auto space-y-6">
                   {/* Chat switching loader */}
                   {switchingChat && (
@@ -1779,7 +1809,7 @@ export default function Dashboard({ user }) {
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Loading chat...</span>
+                        <span className="text-sm text-[#9ca3af]">Loading chat...</span>
                       </div>
                     </motion.div>
                   )}
@@ -1795,10 +1825,10 @@ export default function Dashboard({ user }) {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                         </svg>
                       </div>
-                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                      <h3 className="text-xl font-semibold text-[#e5e7eb] mb-2">
                         Start a conversation with AI
                       </h3>
-                      <p className="text-gray-600 dark:text-gray-400 mb-8">
+                      <p className="text-[#9ca3af] mb-8">
                         Ask anything you'd like to know!
                       </p>
                       <motion.button
@@ -1834,12 +1864,12 @@ export default function Dashboard({ user }) {
                                   setChatInput(template.prompt);
                                   setShowChatTemplates(false);
                                 }}
-                                className="text-left p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md transition-all duration-200 group"
+                                className="text-left p-4 bg-[#121620] rounded-xl border border-[#1f2532] hover:border-[#8b5cf6] hover:shadow-md transition-all duration-200 group"
                               >
-                                <div className="font-medium text-gray-900 dark:text-white mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                                <div className="font-medium text-[#e5e7eb] mb-2 group-hover:text-[#8b5cf6] transition-colors">
                                   {template.title}
                                 </div>
-                                <div className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                                <div className="text-sm text-[#9ca3af] leading-relaxed">
                                   {template.description}
                                 </div>
                               </motion.button>
@@ -1892,11 +1922,22 @@ export default function Dashboard({ user }) {
                             {/* Message Bubble */}
                             <div className="flex flex-col gap-1">
                               <div
-                                className={`relative px-5 py-4 rounded-2xl shadow-lg group/message transition-all duration-200 hover:shadow-xl ${
+                                className={`relative px-5 py-4 rounded-2xl shadow-lg group/message transition-all duration-400 hover:shadow-xl ${
                                   message.role === 'user'
-                                    ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-br-md shadow-blue-500/25'
-                                    : 'bg-white/90 dark:bg-slate-700/90 text-slate-800 dark:text-slate-100 rounded-bl-md border border-slate-200/50 dark:border-slate-600/50'
+                                    ? 'text-white rounded-br-md'
+                                    : 'rounded-bl-md border'
                                 }`}
+                                style={message.role === 'user' 
+                                  ? { 
+                                      background: 'var(--chat-bubble-user)',
+                                      boxShadow: 'var(--shadow-color) 0 4px 12px'
+                                    }
+                                  : {
+                                      backgroundColor: 'var(--chat-bubble-ai)',
+                                      color: 'var(--text-primary)',
+                                      borderColor: 'var(--border-color)'
+                                    }
+                                }
                                 role="textbox"
                                 aria-label={`Message content: ${message.content.substring(0, 100)}${message.content.length > 100 ? '...' : ''}`}
                               >
@@ -1910,7 +1951,7 @@ export default function Dashboard({ user }) {
                                     />
                                   </div>
                                 ) : (
-                                  <div className="prose prose-base dark:prose-invert max-w-none prose-headings:text-white prose-headings:font-semibold prose-p:text-white prose-p:font-normal prose-code:text-white prose-code:bg-white/20 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-white/10 prose-pre:text-white prose-pre:border prose-pre:border-white/20 pr-12">
+                                  <div className="prose prose-base max-w-none prose-headings:text-[#e5e7eb] prose-headings:font-semibold prose-p:text-[#e5e7eb] prose-p:font-normal prose-code:text-[#e5e7eb] prose-code:bg-[#1f2532] prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-[#121620] prose-pre:text-[#e5e7eb] prose-pre:border prose-pre:border-[#1f2532] pr-12">
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
                                   </div>
                                 )}
@@ -2078,12 +2119,12 @@ export default function Dashboard({ user }) {
               </div>
 
               {/* Sticky Input Area */}
-              <div className="border-t border-gray-200/50 dark:border-gray-700/50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+              <div className="border-t border-[#1f2532] bg-transparent">
                 <div className="max-w-4xl mx-auto p-4 space-y-4">
                   {/* AI Persona & Controls */}
                   <div className="flex flex-wrap items-center gap-4 text-xs">
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-600 dark:text-gray-400 font-medium">AI:</span>
+                      <span className="text-[#9ca3af] font-medium">AI:</span>
                       <select
                         value={activePersona?.id || ''}
                         onChange={(e) => {
@@ -2109,7 +2150,7 @@ export default function Dashboard({ user }) {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-600 dark:text-gray-400 font-medium">Model:</span>
+                      <span className="text-[#9ca3af] font-medium">Model:</span>
                       <select
                         value={chatModel}
                         onChange={(e) => {
@@ -2126,7 +2167,7 @@ export default function Dashboard({ user }) {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-600 dark:text-gray-400 font-medium">Temp:</span>
+                      <span className="text-[#9ca3af] font-medium">Temp:</span>
                       <input
                         type="range"
                         min={0}
@@ -2138,13 +2179,13 @@ export default function Dashboard({ user }) {
                           setTemperature(v);
                           try { localStorage.setItem('chat:temperature', String(v)); } catch {}
                         }}
-                        className="w-20 h-1 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer slider"
+                        className="w-20 h-1 bg-[#1f2532] rounded-lg appearance-none cursor-pointer slider"
                       />
-                      <span className="text-xs text-gray-600 dark:text-gray-400 w-8 text-center">{temperature.toFixed(1)}</span>
+                      <span className="text-xs text-[#9ca3af] w-8 text-center">{temperature.toFixed(1)}</span>
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-600 dark:text-gray-400 font-medium">Tokens:</span>
+                      <span className="text-[#9ca3af] font-medium">Tokens:</span>
                       <input
                         type="number"
                         min={1}
@@ -2161,134 +2202,153 @@ export default function Dashboard({ user }) {
                   </div>
 
                   {/* Input Form */}
-                  <form onSubmit={handleChatSubmit} className="relative px-6 pb-6 bg-gradient-to-t from-white/80 via-white/40 to-transparent dark:from-slate-800/80 dark:via-slate-800/40 backdrop-blur-sm" role="form" aria-label="Chat message form">
-                    <div className="flex items-end gap-3">
-                      <div className="flex-1 relative">
-                        <label htmlFor="chat-input" className="sr-only">
-                          Type your message
-                        </label>
-                        <motion.textarea
-                          id="chat-input"
-                          value={chatInput}
-                          onChange={(e) => setChatInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              if (!chatLoading && credits >= 1) {
-                                handleChatSubmit(e);
-                              }
-                            }
-                            if (e.key === 'Escape') {
-                              e.target.blur();
-                            }
-                          }}
-                          placeholder="Type your message... (Enter to send, Shift+Enter for new line)"
-                          disabled={chatLoading}
-                          rows={1}
-                          animate={{
-                            scale: inputPulse ? [1, 1.02, 1] : 1,
-                            borderColor: inputPulse ? ["rgba(147, 51, 234, 0.3)", "rgba(147, 51, 234, 0.8)", "rgba(147, 51, 234, 0.3)"] : "rgba(147, 51, 234, 0.3)"
-                          }}
-                          transition={{
-                            duration: 0.3,
-                            ease: "easeInOut"
-                          }}
-                          className="w-full px-5 py-4 pr-12 bg-white/90 dark:bg-slate-700/90 border border-slate-200/50 dark:border-slate-600/50 rounded-2xl text-slate-800 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 disabled:opacity-50 resize-none transition-all duration-200 shadow-sm hover:shadow-md focus:shadow-lg backdrop-blur-sm"
-                          style={{
-                            minHeight: '48px',
-                            maxHeight: '120px',
-                            height: 'auto'
-                          }}
-                          ref={(el) => {
-                            if (el) {
-                              el.style.height = 'auto';
-                              el.style.height = el.scrollHeight + 'px';
-                            }
-                          }}
-                          aria-describedby="char-count chat-instructions"
-                          aria-invalid={chatInput.length > 2000}
-                          maxLength={2000}
-                          aria-label="Type your message"
-                        />
-                        <div 
-                          id="char-count"
-                          className="absolute bottom-2 right-3 text-xs text-white/60"
-                          aria-live="polite"
-                        >
-                          {chatInput.length}/2000
-                        </div>
-                        <div id="chat-instructions" className="sr-only">
-                          Press Enter to send message, Shift+Enter for new line, Escape to blur input
-                        </div>
-                      </div>
-                      
-                      <motion.button
-                        type="submit"
-                        disabled={chatLoading || !chatInput.trim() || credits < 1}
-                        whileHover={{ 
-                          scale: 1.05,
-                          boxShadow: "0 10px 25px rgba(147, 51, 234, 0.4)"
+                  <form onSubmit={handleChatSubmit} className="relative px-6 pb-6 bg-transparent transition-all duration-400" role="form" aria-label="Chat message form">
+                    <div className="max-w-4xl mx-auto">
+                      {/* Refined Input Container */}
+                      <motion.div
+                        className="relative flex items-end gap-3 px-4 py-3 rounded-2xl border transition-all duration-200 bg-[#121620] border-[#1f2532] text-[#e5e7eb] shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
+                        whileFocus={{
+                          ring: '1px',
+                          ringColor: 'rgba(139, 92, 246, 0.4)'
                         }}
-                        whileTap={{ 
-                          scale: 0.95,
-                          transition: { duration: 0.1 }
-                        }}
-                        animate={{
-                          background: chatInput.trim() 
-                            ? ["linear-gradient(135deg, #8b5cf6, #4f46e5)", "linear-gradient(135deg, #a855f7, #6366f1)", "linear-gradient(135deg, #8b5cf6, #4f46e5)"]
-                            : "linear-gradient(135deg, #8b5cf6, #4f46e5)"
-                        }}
-                        transition={{
-                          duration: 0.3,
-                          ease: "easeInOut"
-                        }}
-                        className="flex items-center justify-center w-12 h-12 text-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400/50 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl relative overflow-hidden transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
-                        aria-label={chatLoading ? "Sending message..." : "Send message"}
-                        aria-describedby="send-button-description"
                       >
-                        <motion.div
-                          className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-600"
-                          animate={{
-                            scale: chatInput.trim() ? [1, 1.1, 1] : 1,
-                            opacity: chatInput.trim() ? [1, 0.8, 1] : 1
+                        {/* Left Side - File Upload Button */}
+                        <motion.button
+                          type="button"
+                          className="flex-shrink-0 p-2 rounded-lg transition-all duration-200 text-zinc-400 hover:text-[#c4b5fd]"
+                          whileHover={{ 
+                            scale: 1.1, 
+                            y: -1
                           }}
-                          transition={{
-                            duration: 0.6,
-                            ease: "easeInOut",
-                            repeat: chatInput.trim() ? Infinity : 0,
-                            repeatDelay: 2
-                          }}
-                        />
-                        <motion.svg 
-                          className="w-5 h-5 relative z-10" 
-                          fill="none" 
-                          stroke="currentColor" 
-                          viewBox="0 0 24 24"
-                          animate={{
-                            rotate: chatInput.trim() ? [0, 5, -5, 0] : 0,
-                            scale: chatInput.trim() ? [1, 1.1, 1] : 1
-                          }}
-                          transition={{
-                            duration: 0.4,
-                            ease: "easeInOut"
-                          }}
+                          whileTap={{ scale: 0.95 }}
+                          title="Attach file (coming soon)"
                         >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                        </motion.svg>
-                      </motion.button>
-                    </div>
-                    
-                    <div className="mt-2 flex items-center justify-between text-xs text-white/60">
-                      <div className="flex items-center gap-4">
-                        <span>Enter to send</span>
-                        <span>Shift+Enter for new line</span>
+                          <Paperclip className="w-5 h-5" />
+                        </motion.button>
+
+                        {/* Center - Text Input */}
+                        <div className="flex-1 relative">
+                          <label htmlFor="chat-input" className="sr-only">
+                            Type your message
+                          </label>
+                          <motion.textarea
+                            id="chat-input"
+                            value={chatInput}
+                            onChange={(e) => {
+                              setChatInput(e.target.value);
+                              // Auto-resize with max 5 lines
+                              const textarea = e.target;
+                              textarea.style.height = 'auto';
+                              const maxHeight = 5 * 24; // 5 lines * 24px line height
+                              textarea.style.height = Math.min(textarea.scrollHeight, maxHeight) + 'px';
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                if (!chatLoading && credits >= 1) {
+                                  handleChatSubmit(e);
+                                }
+                              }
+                              if (e.key === 'Escape') {
+                                e.target.blur();
+                              }
+                            }}
+                            placeholder="Message Nova AI..."
+                            disabled={chatLoading || credits < 1}
+                            className="w-full resize-none border-0 outline-none bg-transparent text-[#e5e7eb] placeholder:text-[#9ca3af]"
+                            style={{
+                              fontSize: '16px',
+                              lineHeight: '24px',
+                              minHeight: '24px',
+                              maxHeight: '120px' // 5 lines
+                            }}
+                            aria-describedby="char-count chat-instructions"
+                            aria-invalid={chatInput.length > 2000}
+                            maxLength={2000}
+                            aria-label="Type your message"
+                            rows={1}
+                          />
+                          <div id="char-count" className="absolute bottom-0 right-0 text-xs text-[#9ca3af]" aria-live="polite">
+                            {chatInput.length}/2000
+                          </div>
+                          <div id="chat-instructions" className="sr-only">
+                            Press Enter to send message, Shift+Enter for new line, Escape to blur input
+                          </div>
+                        </div>
+
+                        {/* Right Side - Action Buttons */}
+                        <div className="flex items-center gap-2">
+                          {/* Voice Input Button */}
+                          <motion.button
+                            type="button"
+                            className="flex-shrink-0 p-2 rounded-lg transition-all duration-200 text-zinc-400 hover:text-[#c4b5fd]"
+                            whileHover={{ 
+                              scale: 1.1, 
+                              y: -1
+                            }}
+                            whileTap={{ scale: 0.95 }}
+                            title="Voice input (coming soon)"
+                          >
+                            <Mic className="w-5 h-5" />
+                          </motion.button>
+
+                          {/* Send Button */}
+                          <motion.button
+                            type="submit"
+                            disabled={!chatInput.trim() || chatLoading || credits < 1}
+                            className={`flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                              chatInput.trim() 
+                                ? 'bg-[#1a1f29] hover:ring-1 hover:ring-[#8b5cf6]/40' 
+                                : 'bg-[#6b7280]'
+                            }`}
+                            whileHover={chatInput.trim() ? { 
+                              scale: 1.1, 
+                              y: -1
+                            } : {}}
+                            whileTap={{ scale: 0.95 }}
+                            aria-label={chatLoading ? "Sending message..." : "Send message"}
+                            aria-describedby="send-button-description"
+                          >
+                            <AnimatePresence mode="wait">
+                              {chatLoading ? (
+                                <motion.div
+                                  key="loading"
+                                  initial={{ opacity: 0, rotate: -180 }}
+                                  animate={{ opacity: 1, rotate: 0 }}
+                                  exit={{ opacity: 0, rotate: 180 }}
+                                  transition={{ duration: 0.3 }}
+                                  className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
+                                />
+                              ) : (
+                                <motion.div
+                                  key="send"
+                                  initial={{ opacity: 0, rotate: -180 }}
+                                  animate={{ opacity: 1, rotate: 0 }}
+                                  exit={{ opacity: 0, rotate: 180 }}
+                                  transition={{ duration: 0.3 }}
+                                >
+                                  <Send className="w-4 h-4" />
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </motion.button>
+                        </div>
+                      </motion.div>
+
+                      {/* Helper Text */}
+                      <div className="mt-3 flex items-center justify-between text-xs bg-transparent text-[#9ca3af]">
+                        <div className="flex items-center gap-4">
+                          <span>Enter to send</span>
+                          <span>Shift+Enter for new line</span>
+                        </div>
+                        <span className="font-medium text-[#8b5cf6]/90">
+                          1 credit per message
+                        </span>
                       </div>
-                      <span className="text-primary-600 dark:text-primary-400 font-medium">
-                        1 credit per message
-                      </span>
-                    </div>
-                    <div id="send-button-description" className="sr-only">
-                      Send your message. Disabled when no text or insufficient credits.
+
+                      <div id="send-button-description" className="sr-only">
+                        Send your message. Disabled when no text or insufficient credits.
+                      </div>
                     </div>
                   </form>
                 </div>
@@ -2297,19 +2357,19 @@ export default function Dashboard({ user }) {
           </div>
         ) : activeTab === 'library' ? (
           // Library Interface - All Images
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md h-[calc(100vh-250px)] flex flex-col transition-colors duration-200 flex-1">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Image Library</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">All your generated images</p>
+          <div className="bg-[#121620] rounded-lg shadow-md h-[calc(100vh-250px)] flex flex-col transition-colors duration-200 flex-1">
+            <div className="p-6 border-b border-[#1f2532]">
+              <h2 className="text-xl font-semibold text-[#e5e7eb]">Image Library</h2>
+              <p className="text-sm text-[#9ca3af] mt-1">All your generated images</p>
             </div>
             <div className="flex-1 overflow-y-auto p-6">
               {imageHistory.length === 0 ? (
-                <div className="text-center text-gray-500 dark:text-gray-400 mt-20">
-                  <svg className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="text-center text-[#9ca3af] mt-20">
+                  <svg className="w-16 h-16 mx-auto mb-4 text-[#6b7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  <p className="text-lg">No images generated yet</p>
-                  <p className="text-sm mt-2">Create your first image in the Generate Images tab</p>
+                  <p className="text-lg text-[#e5e7eb]">No images generated yet</p>
+                  <p className="text-sm mt-2 text-[#9ca3af]">Create your first image in the Generate Images tab</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -2331,11 +2391,11 @@ export default function Dashboard({ user }) {
                         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity duration-200"></div>
                       </div>
                       <div className="p-3">
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Prompt:</p>
-                        <p className="text-sm text-gray-900 dark:text-gray-100 line-clamp-2">{image.prompt}</p>
+                        <p className="text-xs text-[#9ca3af] mb-1">Prompt:</p>
+                        <p className="text-sm text-[#e5e7eb] line-clamp-2">{image.prompt}</p>
                         <div className="flex justify-between items-center mt-2">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                            <span className="text-xs text-[#9ca3af]">
                               {new Date(image.timestamp).toLocaleDateString()}
                             </span>
                             <ShareButton
@@ -2388,10 +2448,10 @@ export default function Dashboard({ user }) {
                         setImagePrompt(template.prompt);
                         setShowImageTemplates(false);
                       }}
-                      className="text-left p-3 bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 hover:border-primary-500 dark:hover:border-primary-500 transition-colors"
+                      className="text-left p-3 bg-[#121620] rounded-md border border-[#1f2532] hover:border-[#8b5cf6] transition-colors"
                     >
-                      <div className="font-medium text-sm text-gray-900 dark:text-white mb-1">{template.title}</div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400">{template.description}</div>
+                      <div className="font-medium text-sm text-[#e5e7eb] mb-1">{template.title}</div>
+                      <div className="text-xs text-[#9ca3af]">{template.description}</div>
                     </button>
                   ))}
                 </div>
@@ -2399,7 +2459,7 @@ export default function Dashboard({ user }) {
 
               <form onSubmit={handleImageGeneration} className="space-y-4">
                 <div>
-                  <label htmlFor="imagePrompt" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label htmlFor="imagePrompt" className="block text-sm font-medium text-[#e5e7eb] mb-2">
                     Describe the image you want to create
                   </label>
                   <textarea
@@ -2409,7 +2469,7 @@ export default function Dashboard({ user }) {
                     placeholder="e.g., A serene landscape with mountains at sunset, painted in watercolor style"
                     rows={3}
                     disabled={imageLoading}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:bg-gray-100 dark:disabled:bg-gray-800"
+                    className="w-full px-4 py-2 border border-[#1f2532] rounded-lg bg-[#121620] text-[#e5e7eb] placeholder-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#8b5cf6] focus:border-transparent disabled:bg-[#0f141e]"
                   />
                 </div>
                 <motion.button
@@ -2417,7 +2477,7 @@ export default function Dashboard({ user }) {
                   disabled={imageLoading || !imagePrompt.trim() || credits < 5}
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
-                  className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 dark:ring-offset-gray-800 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                  className="w-full px-6 py-3 bg-[#8b5cf6] text-[#e5e7eb] rounded-lg font-medium hover:bg-[#7c3aed] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#8b5cf6] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                 >
                   {imageLoading ? (
                     <span className="flex items-center justify-center gap-2">
@@ -2455,8 +2515,8 @@ export default function Dashboard({ user }) {
                           </svg>
                         </div>
                       </div>
-                      <p className="text-gray-600 dark:text-gray-300 font-medium">Generating your masterpiece...</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">This may take a moment</p>
+                      <p className="text-[#e5e7eb] font-medium">Generating your masterpiece...</p>
+                      <p className="text-sm text-[#9ca3af] mt-2">This may take a moment</p>
                     </div>
                   </div>
                 </motion.div>
@@ -2496,9 +2556,9 @@ export default function Dashboard({ user }) {
                     alt={generatedImage.prompt}
                     className="w-full rounded-lg shadow-lg"
                   />
-                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Prompt:</p>
-                    <p className="text-gray-900 dark:text-gray-100">{generatedImage.prompt}</p>
+                  <div className="bg-[#1a1f29] rounded-lg p-4">
+                    <p className="text-sm text-[#9ca3af] mb-1">Prompt:</p>
+                    <p className="text-[#e5e7eb]">{generatedImage.prompt}</p>
                   </div>
                   <a
                     href={generatedImage.url}
@@ -2525,7 +2585,7 @@ export default function Dashboard({ user }) {
                         className="w-full h-48 object-cover rounded-lg shadow cursor-pointer hover:shadow-lg transition-shadow"
                         onClick={() => setGeneratedImage(image)}
                       />
-                      <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{image.prompt}</p>
+                      <p className="text-xs text-[#9ca3af] line-clamp-2">{image.prompt}</p>
                     </div>
                   ))}
                 </div>
@@ -2602,7 +2662,7 @@ export default function Dashboard({ user }) {
               damping: 30,
               duration: 0.3 
             }}
-            className="fixed bottom-6 right-6 z-50 bg-white/90 dark:bg-slate-800/90 border border-slate-200/50 dark:border-slate-700/50 rounded-2xl px-5 py-4 shadow-xl backdrop-blur-xl"
+            className="fixed bottom-6 right-6 z-50 bg-[#121620] border border-[#1f2532] rounded-2xl px-5 py-4 shadow-xl"
           >
             <div className="flex items-center gap-3">
               <motion.div
@@ -2613,11 +2673,17 @@ export default function Dashboard({ user }) {
               >
                 <Check className="w-4 h-4 text-white" />
               </motion.div>
-              <span className="text-white font-medium">Copied to clipboard!</span>
+              <span className="text-[#e5e7eb] font-medium">Copied to clipboard!</span>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Theme Selector Modal */}
+      <ThemeSelector 
+        isOpen={isThemeSelectorOpen} 
+        onClose={() => setIsThemeSelectorOpen(false)} 
+      />
     </div>
   );
 }

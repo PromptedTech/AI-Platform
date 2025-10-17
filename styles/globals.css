@@ -4,33 +4,107 @@
 
 /* CSS Variables for Theme Consistency */
 :root {
-  /* Light Theme */
+  /* Default Nova Theme - Dark */
+  --bg-gradient: linear-gradient(135deg, #0d1117 0%, #1a1f29 50%, #0f141e 100%);
+  --bg-gradient-light: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+  --sidebar-bg: #121620;
+  --sidebar-bg-light: #f1f5f9;
+  --topbar-bg: #0f141e;
+  --topbar-bg-light: #ffffff;
+  --chat-bubble-user: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  --chat-bubble-ai: #1e2633;
+  --chat-bubble-ai-light: #f8fafc;
+  --accent-primary: #8b5cf6;
+  --accent-secondary: #6366f1;
+  --text-primary: #e5e7eb;
+  --text-primary-light: #1e293b;
+  --text-secondary: #9ca3af;
+  --text-secondary-light: #64748b;
+  --input-bg: #1f2937;
+  --input-bg-light: #ffffff;
+  --border-color: #374151;
+  --border-color-light: #e2e8f0;
+  --shadow-color: rgba(139, 92, 246, 0.25);
+  --shadow-color-light: rgba(59, 130, 246, 0.15);
+  --glass-bg: rgba(18, 22, 32, 0.8);
+  --glass-bg-light: rgba(255, 255, 255, 0.8);
+
+  /* Legacy variables for compatibility */
   --gradient-primary: linear-gradient(135deg, #9333ea 0%, #4f46e5 100%);
   --gradient-secondary: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
-  --glass-bg: rgba(255, 255, 255, 0.25);
   --glass-border: rgba(255, 255, 255, 0.18);
   --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-  --text-primary: #1f2937;
-  --text-secondary: #6b7280;
-  --text-muted: #9ca3af;
-  --bg-primary: #ffffff;
-  --bg-secondary: #f9fafb;
-  --border-color: rgba(229, 231, 235, 0.8);
-}
-
-[data-theme="dark"] {
-  /* Dark Theme */
-  --gradient-primary: linear-gradient(135deg, #7c3aed 0%, #3730a3 100%);
-  --gradient-secondary: linear-gradient(135deg, #8b5cf6 0%, #4f46e5 100%);
-  --glass-bg: rgba(17, 24, 39, 0.4);
-  --glass-border: rgba(75, 85, 99, 0.3);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-  --text-primary: #f9fafb;
-  --text-secondary: #d1d5db;
   --text-muted: #9ca3af;
   --bg-primary: #111827;
   --bg-secondary: #1f2937;
-  --border-color: rgba(75, 85, 99, 0.5);
+}
+
+/* Theme-specific CSS classes */
+.theme-nova-default {
+  /* Default theme variables are already set in :root */
+}
+
+.theme-aurora {
+  --bg-gradient: linear-gradient(135deg, #1a0b2e 0%, #16213e 50%, #0f3460 100%);
+  --sidebar-bg: #1a0b2e;
+  --topbar-bg: #0f0a1a;
+  --chat-bubble-user: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+  --chat-bubble-ai: #16213e;
+  --accent-primary: #8b5cf6;
+  --accent-secondary: #a855f7;
+  --shadow-color: rgba(139, 92, 246, 0.4);
+  --glass-bg: rgba(26, 11, 46, 0.8);
+}
+
+.theme-oceanic {
+  --bg-gradient: linear-gradient(135deg, #0c4a6e 0%, #075985 50%, #0c4a6e 100%);
+  --sidebar-bg: #0c4a6e;
+  --topbar-bg: #075985;
+  --chat-bubble-user: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+  --chat-bubble-ai: #075985;
+  --accent-primary: #0891b2;
+  --accent-secondary: #06b6d4;
+  --shadow-color: rgba(8, 145, 178, 0.3);
+  --glass-bg: rgba(12, 74, 110, 0.8);
+}
+
+.theme-neon {
+  --bg-gradient: linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #16213e 100%);
+  --sidebar-bg: #1a1a2e;
+  --topbar-bg: #000000;
+  --chat-bubble-user: linear-gradient(135deg, #ec4899 0%, #06b6d4 100%);
+  --chat-bubble-ai: #1a1a2e;
+  --accent-primary: #ec4899;
+  --accent-secondary: #06b6d4;
+  --shadow-color: rgba(236, 72, 153, 0.5);
+  --glass-bg: rgba(26, 26, 46, 0.9);
+}
+
+.theme-minimal {
+  --bg-gradient: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
+  --sidebar-bg: #f8fafc;
+  --topbar-bg: #ffffff;
+  --chat-bubble-user: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  --chat-bubble-ai: #ffffff;
+  --accent-primary: #3b82f6;
+  --accent-secondary: #1d4ed8;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --input-bg: #ffffff;
+  --border-color: #e2e8f0;
+  --shadow-color: rgba(59, 130, 246, 0.1);
+  --glass-bg: rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="dark"] {
+  /* Legacy dark theme support */
+  --gradient-primary: linear-gradient(135deg, #7c3aed 0%, #3730a3 100%);
+  --gradient-secondary: linear-gradient(135deg, #8b5cf6 0%, #4f46e5 100%);
+  --glass-border: rgba(75, 85, 99, 0.3);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  --text-muted: #9ca3af;
+  --bg-primary: #111827;
+  --bg-secondary: #1f2937;
 }
 
 * {
