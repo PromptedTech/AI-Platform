@@ -12,7 +12,7 @@ import { getChatTemplates, getImageTemplates } from '../lib/templates';
 import { getUserCredits, deductCredits } from '../lib/credits';
 import CreditsModal from '../components/CreditsModal';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Image as ImageIcon, Sparkles, Library, User, Coins, Clock, Zap, Bug, Menu, X, Home, Settings, LogOut, ChevronLeft, ChevronRight, Plus, Search, MoreVertical, Edit3, Trash2, Calendar } from 'lucide-react';
+import { MessageSquare, Image as ImageIcon, Sparkles, Library, User, Coins, Clock, Zap, Bug, Menu, X, Home, Settings, LogOut, ChevronLeft, ChevronRight, Plus, Search, MoreVertical, Edit3, Trash2, Calendar, Clipboard, Check } from 'lucide-react';
 import FeedbackModal from '../components/FeedbackModal';
 import ShareButton from '../components/ShareButton';
 
@@ -181,6 +181,10 @@ export default function Dashboard({ user }) {
   const [editingThread, setEditingThread] = useState(null);
   const [editTitle, setEditTitle] = useState('');
   const [switchingChat, setSwitchingChat] = useState(false);
+  
+  // Copy message functionality
+  const [copiedMessageId, setCopiedMessageId] = useState(null);
+  const [showCopyToast, setShowCopyToast] = useState(false);
 
   // Smooth scroll to bottom
   const scrollToBottom = () => {
@@ -294,6 +298,37 @@ export default function Dashboard({ user }) {
     setTimeout(() => {
       setSwitchingChat(false);
     }, 200);
+  };
+
+  // Copy message to clipboard
+  const copyMessage = async (messageText, messageId) => {
+    try {
+      await navigator.clipboard.writeText(messageText);
+      setCopiedMessageId(messageId);
+      setShowCopyToast(true);
+      
+      // Reset the copied state after 2 seconds
+      setTimeout(() => {
+        setCopiedMessageId(null);
+        setShowCopyToast(false);
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = messageText;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      setCopiedMessageId(messageId);
+      setShowCopyToast(true);
+      setTimeout(() => {
+        setCopiedMessageId(null);
+        setShowCopyToast(false);
+      }, 2000);
+    }
   };
 
   const ensureActiveThread = async () => {
@@ -1528,24 +1563,63 @@ export default function Dashboard({ user }) {
                             {/* Message Bubble */}
                             <div className="flex flex-col gap-1">
                               <div
-                                className={`relative px-4 py-3 rounded-2xl shadow-lg ${
+                                className={`relative px-4 py-3 rounded-2xl shadow-lg group/message ${
                                   message.role === 'user'
                                     ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-br-md'
                                     : 'glass text-white rounded-bl-md border-glass'
                                 }`}
                               >
                                 {message.role === 'user' ? (
-                                  <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                                  <p className="whitespace-pre-wrap leading-relaxed pr-8">{message.content}</p>
                                 ) : message.isTyping ? (
-                                  <TypingMessage 
-                                    message={message.content} 
-                                    onComplete={() => handleTypingComplete(index)}
-                                  />
+                                  <div className="pr-8">
+                                    <TypingMessage 
+                                      message={message.content} 
+                                      onComplete={() => handleTypingComplete(index)}
+                                    />
+                                  </div>
                                 ) : (
-                                  <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-p:text-gray-800 dark:prose-p:text-gray-200 prose-code:text-gray-900 dark:prose-code:text-gray-100 prose-pre:bg-gray-100 dark:prose-pre:bg-gray-800">
+                                  <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-p:text-gray-800 dark:prose-p:text-gray-200 prose-code:text-gray-900 dark:prose-code:text-gray-100 prose-pre:bg-gray-100 dark:prose-pre:bg-gray-800 pr-8">
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
                                   </div>
                                 )}
+                                
+                                {/* Copy Button */}
+                                <motion.button
+                                  onClick={() => copyMessage(message.content, `${activeThreadId}-${index}`)}
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  className={`absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover/message:opacity-100 transition-all duration-200 ${
+                                    message.role === 'user'
+                                      ? 'bg-white/20 hover:bg-white/30 text-white'
+                                      : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white'
+                                  }`}
+                                  title="Copy message"
+                                >
+                                  <AnimatePresence mode="wait">
+                                    {copiedMessageId === `${activeThreadId}-${index}` ? (
+                                      <motion.div
+                                        key="check"
+                                        initial={{ scale: 0, rotate: -180 }}
+                                        animate={{ scale: 1, rotate: 0 }}
+                                        exit={{ scale: 0, rotate: 180 }}
+                                        transition={{ duration: 0.2 }}
+                                      >
+                                        <Check className="w-4 h-4" />
+                                      </motion.div>
+                                    ) : (
+                                      <motion.div
+                                        key="clipboard"
+                                        initial={{ scale: 1, rotate: 0 }}
+                                        animate={{ scale: 1, rotate: 0 }}
+                                        exit={{ scale: 0, rotate: -180 }}
+                                        transition={{ duration: 0.2 }}
+                                      >
+                                        <Clipboard className="w-4 h-4" />
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </motion.button>
                               </div>
                               
                               {/* Timestamp */}
@@ -2132,6 +2206,36 @@ export default function Dashboard({ user }) {
         onClose={() => setShowFeedbackModal(false)}
         userId={user?.uid}
       />
+
+      {/* Copy Toast Notification */}
+      <AnimatePresence>
+        {showCopyToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 50, scale: 0.9 }}
+            transition={{ 
+              type: "spring", 
+              stiffness: 300, 
+              damping: 30,
+              duration: 0.3 
+            }}
+            className="fixed bottom-6 right-6 z-50 glass border-glass rounded-xl px-4 py-3 shadow-lg backdrop-blur-sm"
+          >
+            <div className="flex items-center gap-3">
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.1, duration: 0.3 }}
+                className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center"
+              >
+                <Check className="w-4 h-4 text-white" />
+              </motion.div>
+              <span className="text-white font-medium">Copied to clipboard!</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
