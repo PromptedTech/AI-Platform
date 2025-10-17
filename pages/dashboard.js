@@ -797,239 +797,416 @@ export default function Dashboard({ user }) {
           </div>
         </aside>
         {activeTab === 'chat' ? (
-          // Chat Interface
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md h-[calc(100vh-250px)] sm:h-[calc(100vh-250px)] flex flex-col transition-colors duration-200 flex-1 w-full">
-            {/* Messages Container */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              {activePersona && (
-                <div className="flex items-center gap-3 p-3 mb-2 bg-primary-50 dark:bg-gray-700 rounded-md">
-                  {activePersona.avatar && (
-                    <img src={activePersona.avatar} alt={activePersona.name} className="w-6 h-6 rounded-full object-cover" />
-                  )}
-                  <span className="text-sm text-primary-700 dark:text-white">Persona active: <span className="font-medium">{activePersona.name}</span></span>
-                  <button
-                    onClick={() => {
-                      const q = { ...router.query };
-                      delete q.persona;
-                      router.push({ pathname: '/dashboard', query: q });
-                    }}
-                    className="ml-auto text-xs text-gray-600 dark:text-gray-300 hover:underline"
+          // Modern Chat Interface
+          <div className="relative flex-1 w-full h-[calc(100vh-250px)] overflow-hidden">
+            {/* Background with subtle gradient */}
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"></div>
+            
+            {/* Main Chat Container */}
+            <div className="relative h-full flex flex-col">
+              {/* Persona Banner */}
+              <AnimatePresence>
+                {activePersona && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="bg-gradient-to-r from-primary-500/10 to-purple-500/10 dark:from-primary-500/20 dark:to-purple-500/20 border-b border-primary-200/50 dark:border-primary-700/50 p-4"
                   >
-                    Remove
-                  </button>
-                </div>
-              )}
-              {messages.length === 0 ? (
-                <div className="text-center text-gray-500 dark:text-gray-400 mt-20">
-                  <p className="text-lg">Start a conversation with GPT-4</p>
-                  <p className="text-sm mt-2">Ask anything you'd like to know!</p>
-                  <button
-                    onClick={() => setShowChatTemplates(!showChatTemplates)}
-                    className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-                  >
-                    {showChatTemplates ? 'Hide Templates' : 'Browse Templates'}
-                  </button>
-                  {showChatTemplates && (
-                    <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3 max-w-4xl mx-auto">
-                      {chatTemplates.map((template) => (
-                        <button
-                          key={template.id}
-                          onClick={() => {
-                            setChatInput(template.prompt);
-                            setShowChatTemplates(false);
-                          }}
-                          className="text-left p-4 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-primary-500 dark:hover:border-primary-500 transition-colors"
-                        >
-                          <div className="font-medium text-gray-900 dark:text-white mb-1">{template.title}</div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400">{template.description}</div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                messages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`flex ${
-                      message.role === 'user' ? 'justify-end' : 'justify-start'
-                    }`}
-                  >
-                    <div className={`flex items-start gap-2 ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                      <div
-                        className={`max-w-3xl rounded-lg px-4 py-2 ${
-                          message.role === 'user'
-                            ? 'bg-primary-600 text-white'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-                        }`}
-                      >
-                        {message.role === 'user' ? (
-                          <p className="whitespace-pre-wrap">{message.content}</p>
-                        ) : (
-                          <div className="prose prose-sm dark:prose-invert max-w-none">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
-                          </div>
-                        )}
-                      </div>
-                      {message.role === 'assistant' && index > 0 && (
-                        <ShareButton
-                          type="chat"
-                          userId={user.uid}
-                          message={messages[index - 1]?.content || ''}
-                          response={message.content}
-                          model={chatModel}
+                    <div className="flex items-center gap-3 max-w-4xl mx-auto">
+                      {activePersona.avatar && (
+                        <img 
+                          src={activePersona.avatar} 
+                          alt={activePersona.name} 
+                          className="w-8 h-8 rounded-full object-cover ring-2 ring-primary-200 dark:ring-primary-700" 
                         />
                       )}
+                      <div className="flex-1">
+                        <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
+                          {activePersona.name}
+                        </span>
+                        <p className="text-xs text-primary-600 dark:text-primary-400">
+                          Custom AI persona active
+                        </p>
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                          const q = { ...router.query };
+                          delete q.persona;
+                          router.push({ pathname: '/dashboard', query: q });
+                        }}
+                        className="px-3 py-1 text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 bg-primary-100 dark:bg-primary-900/30 rounded-full transition-colors"
+                      >
+                        Remove
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Messages Container */}
+              <div className="flex-1 overflow-y-auto px-4 py-6">
+                <div className="max-w-4xl mx-auto space-y-6">
+                  {messages.length === 0 ? (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6 }}
+                      className="text-center py-20"
+                    >
+                      <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-primary-500 to-purple-500 rounded-2xl flex items-center justify-center">
+                        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                        Start a conversation with AI
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-400 mb-8">
+                        Ask anything you'd like to know!
+                      </p>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => setShowChatTemplates(!showChatTemplates)}
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-purple-600 text-white font-medium rounded-xl hover:shadow-lg transition-all duration-200"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        {showChatTemplates ? 'Hide Templates' : 'Browse Templates'}
+                      </motion.button>
+                      
+                      <AnimatePresence>
+                        {showChatTemplates && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.3 }}
+                            className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4"
+                          >
+                            {chatTemplates.map((template, index) => (
+                              <motion.button
+                                key={template.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3, delay: index * 0.1 }}
+                                whileHover={{ scale: 1.02, y: -2 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => {
+                                  setChatInput(template.prompt);
+                                  setShowChatTemplates(false);
+                                }}
+                                className="text-left p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md transition-all duration-200 group"
+                              >
+                                <div className="font-medium text-gray-900 dark:text-white mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                                  {template.title}
+                                </div>
+                                <div className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                                  {template.description}
+                                </div>
+                              </motion.button>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  ) : (
+                    <AnimatePresence>
+                      {messages.map((message, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          transition={{ 
+                            duration: 0.4,
+                            delay: index * 0.1,
+                            type: "spring",
+                            stiffness: 300,
+                            damping: 30
+                          }}
+                          className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} group`}
+                        >
+                          <div className={`flex items-start gap-3 max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                            {/* Avatar */}
+                            <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                              message.role === 'user' 
+                                ? 'bg-gradient-to-br from-primary-500 to-primary-600' 
+                                : 'bg-gradient-to-br from-gray-400 to-gray-500 dark:from-gray-600 dark:to-gray-700'
+                            }`}>
+                              {message.role === 'user' ? (
+                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                              ) : (
+                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                              )}
+                            </div>
+
+                            {/* Message Bubble */}
+                            <div className="flex flex-col gap-1">
+                              <div
+                                className={`relative px-4 py-3 rounded-2xl shadow-sm ${
+                                  message.role === 'user'
+                                    ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white rounded-br-md'
+                                    : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-md border border-gray-200 dark:border-gray-700'
+                                }`}
+                              >
+                                {message.role === 'user' ? (
+                                  <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                                ) : (
+                                  <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-p:text-gray-800 dark:prose-p:text-gray-200 prose-code:text-gray-900 dark:prose-code:text-gray-100 prose-pre:bg-gray-100 dark:prose-pre:bg-gray-800">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Timestamp */}
+                              <div className={`text-xs text-gray-500 dark:text-gray-400 px-2 ${
+                                message.role === 'user' ? 'text-right' : 'text-left'
+                              }`}>
+                                {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </div>
+                            </div>
+
+                            {/* Share Button */}
+                            {message.role === 'assistant' && index > 0 && (
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                <ShareButton
+                                  type="chat"
+                                  userId={user.uid}
+                                  message={messages[index - 1]?.content || ''}
+                                  response={message.content}
+                                  model={chatModel}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  )}
+
+                  {/* Loading Animation */}
+                  <AnimatePresence>
+                    {chatLoading && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                        className="flex justify-start"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-400 to-gray-500 dark:from-gray-600 dark:to-gray-700 flex items-center justify-center">
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
+                            <div className="flex items-center gap-2">
+                              <div className="flex space-x-1">
+                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                              </div>
+                              <span className="text-sm text-gray-600 dark:text-gray-400">
+                                {thinkElapsed > 0 ? `Thinking for ${thinkElapsed}s...` : 'Thinking...'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Response Time */}
+                  {lastResponseTime !== null && !chatLoading && !chatError && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex justify-start"
+                    >
+                      <div className="text-xs text-gray-500 dark:text-gray-400 px-2">
+                        ✓ Replied in {lastResponseTime}s
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Error Message */}
+                  <AnimatePresence>
+                    {chatError && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center">
+                            <svg className="w-3 h-3 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-1">Error</p>
+                            <p className="text-sm text-red-700 dark:text-red-300">{chatError}</p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* Sticky Input Area */}
+              <div className="border-t border-gray-200/50 dark:border-gray-700/50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+                <div className="max-w-4xl mx-auto p-4 space-y-4">
+                  {/* AI Persona & Controls */}
+                  <div className="flex flex-wrap items-center gap-4 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-600 dark:text-gray-400 font-medium">AI:</span>
+                      <select
+                        value={activePersona?.id || ''}
+                        onChange={(e) => {
+                          const personaId = e.target.value;
+                          if (!personaId) {
+                            setActivePersona(null);
+                          } else {
+                            const found = availablePersonas.find(p => p.id === personaId);
+                            if (found) {
+                              setActivePersona(found);
+                            }
+                          }
+                        }}
+                        className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                      >
+                        <option value="">Default AI</option>
+                        {availablePersonas.map((persona) => (
+                          <option key={persona.id} value={persona.id}>
+                            {persona.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-600 dark:text-gray-400 font-medium">Model:</span>
+                      <select
+                        value={chatModel}
+                        onChange={(e) => {
+                          setChatModel(e.target.value);
+                          try { localStorage.setItem('chat:model', e.target.value); } catch {}
+                        }}
+                        className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                      >
+                        <option value="gpt-4o-mini">gpt-4o-mini</option>
+                        <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                        <option value="gpt-4o">gpt-4o</option>
+                        <option value="gpt-4">gpt-4</option>
+                      </select>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-600 dark:text-gray-400 font-medium">Temp:</span>
+                      <input
+                        type="range"
+                        min={0}
+                        max={2}
+                        step={0.1}
+                        value={temperature}
+                        onChange={(e) => {
+                          const v = parseFloat(e.target.value);
+                          setTemperature(v);
+                          try { localStorage.setItem('chat:temperature', String(v)); } catch {}
+                        }}
+                        className="w-20 h-1 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer slider"
+                      />
+                      <span className="text-xs text-gray-600 dark:text-gray-400 w-8 text-center">{temperature.toFixed(1)}</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-600 dark:text-gray-400 font-medium">Tokens:</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={4000}
+                        value={maxTokens}
+                        onChange={(e) => {
+                          const v = parseInt(e.target.value || '0', 10);
+                          setMaxTokens(Number.isNaN(v) ? 1 : v);
+                          try { localStorage.setItem('chat:maxTokens', String(v)); } catch {}
+                        }}
+                        className="w-16 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                      />
                     </div>
                   </div>
-                ))
-              )}
-              <AnimatePresence>
-                {chatLoading && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="flex justify-start"
-                  >
-                    <div className="bg-gray-100 dark:bg-gray-700 rounded-lg px-4 py-2 flex items-center gap-2">
-                      <svg className="w-4 h-4 animate-spin text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                      </svg>
-                      <p className="text-gray-600 dark:text-gray-300">Thinking{thinkElapsed > 0 ? ` for ${thinkElapsed}s` : '...'}</p>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              {lastResponseTime !== null && !chatLoading && !chatError && (
-                <div className="flex justify-start">
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Replied in {lastResponseTime}s</div>
-                </div>
-              )}
-              <AnimatePresence>
-                {chatError && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="mt-2"
-                  >
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg flex items-start gap-2">
-                      <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                      </svg>
-                      <div className="flex-1">{chatError}</div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
 
-            {/* Input Form */}
-            <div className="border-t border-gray-200 dark:border-gray-700 p-4 space-y-3">
-              {/* AI Persona Selector */}
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600 dark:text-gray-300">AI Persona:</span>
-                <select
-                  value={activePersona?.id || ''}
-                  onChange={(e) => {
-                    const personaId = e.target.value;
-                    if (!personaId) {
-                      setActivePersona(null);
-                    } else {
-                      const found = availablePersonas.find(p => p.id === personaId);
-                      if (found) {
-                        setActivePersona(found);
-                      }
-                    }
-                  }}
-                  className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  <option value="">Default AI</option>
-                  {availablePersonas.map((persona) => (
-                    <option key={persona.id} value={persona.id}>
-                      {persona.name}
-                    </option>
-                  ))}
-                </select>
-                {activePersona && activePersona.avatar && (
-                  <img src={activePersona.avatar} alt={activePersona.name} className="w-6 h-6 rounded-full object-cover" />
-                )}
-              </div>
-
-              {/* Controls Below Chatbox (Cursor-like) */}
-              <div className="flex flex-wrap items-center gap-4 text-xs text-gray-600 dark:text-gray-300">
-                <div className="flex items-center gap-2">
-                  <span className="opacity-80">Model</span>
-                  <select
-                    value={chatModel}
-                    onChange={(e) => {
-                      setChatModel(e.target.value);
-                      try { localStorage.setItem('chat:model', e.target.value); } catch {}
-                    }}
-                    className="px-2 py-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                  >
-                    <option value="gpt-4o-mini">gpt-4o-mini (recommended)</option>
-                    <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
-                    <option value="gpt-4o">gpt-4o (if available)</option>
-                    <option value="gpt-4">gpt-4 (if available)</option>
-                  </select>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="opacity-80">Temp</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={2}
-                    step={0.1}
-                    value={temperature}
-                    onChange={(e) => {
-                      const v = parseFloat(e.target.value);
-                      setTemperature(v);
-                      try { localStorage.setItem('chat:temperature', String(v)); } catch {}
-                    }}
-                    className="w-32"
-                  />
-                  <span className="tabular-nums w-8 text-center">{temperature.toFixed(1)}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="opacity-80">Max tokens</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={4000}
-                    value={maxTokens}
-                    onChange={(e) => {
-                      const v = parseInt(e.target.value || '0', 10);
-                      setMaxTokens(Number.isNaN(v) ? 1 : v);
-                      try { localStorage.setItem('chat:maxTokens', String(v)); } catch {}
-                    }}
-                    className="w-20 px-2 py-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                  />
+                  {/* Input Form */}
+                  <form onSubmit={handleChatSubmit} className="relative">
+                    <div className="flex items-end gap-3">
+                      <div className="flex-1 relative">
+                        <textarea
+                          value={chatInput}
+                          onChange={(e) => setChatInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              if (!chatLoading && chatInput.trim() && credits >= 1) {
+                                handleChatSubmit(e);
+                              }
+                            }
+                          }}
+                          placeholder="Type your message... (Enter to send, Shift+Enter for new line)"
+                          disabled={chatLoading}
+                          rows={1}
+                          className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:bg-gray-100 dark:disabled:bg-gray-800 resize-none transition-all duration-200"
+                          style={{
+                            minHeight: '48px',
+                            maxHeight: '120px',
+                            height: 'auto'
+                          }}
+                          ref={(el) => {
+                            if (el) {
+                              el.style.height = 'auto';
+                              el.style.height = el.scrollHeight + 'px';
+                            }
+                          }}
+                        />
+                        <div className="absolute bottom-2 right-3 text-xs text-gray-400 dark:text-gray-500">
+                          {chatInput.length}/2000
+                        </div>
+                      </div>
+                      
+                      <motion.button
+                        type="submit"
+                        disabled={chatLoading || !chatInput.trim() || credits < 1}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-primary-600 to-purple-600 text-white rounded-2xl hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 dark:ring-offset-gray-800 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                      </motion.button>
+                    </div>
+                    
+                    <div className="mt-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center gap-4">
+                        <span>Enter to send</span>
+                        <span>Shift+Enter for new line</span>
+                      </div>
+                      <span className="text-primary-600 dark:text-primary-400 font-medium">
+                        1 credit per message
+                      </span>
+                    </div>
+                  </form>
                 </div>
               </div>
-
-              <form onSubmit={handleChatSubmit} className="flex gap-2">
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Type your message..."
-                  disabled={chatLoading}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:bg-gray-100 dark:disabled:bg-gray-800"
-                />
-                <motion.button
-                  type="submit"
-                  disabled={chatLoading || !chatInput.trim() || credits < 1}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 dark:ring-offset-gray-800 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2"
-                >
-                  <span>Send</span>
-                  <span className="text-xs opacity-75">(1 credit)</span>
-                </motion.button>
-              </form>
             </div>
           </div>
         ) : activeTab === 'library' ? (
