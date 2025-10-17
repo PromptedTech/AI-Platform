@@ -130,8 +130,7 @@ export default function Hero({ onTryDemo }) {
         >
           {[
             { label: 'AI Models', value: '4+' },
-            { label: 'Free Credits', value: '50' },
-            { label: 'Active Users', value: '1K+' }
+            { label: 'Free Credits', value: '50' }
           ].map((stat, index) => (
             <motion.div
               key={stat.label}
