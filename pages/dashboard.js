@@ -290,6 +290,27 @@ export default function Dashboard({ user }) {
     return () => clearInterval(interval);
   }, []);
 
+  // Keyboard navigation for chat messages
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        // Close any open modals or focus on input
+        const activeElement = document.activeElement;
+        if (activeElement && activeElement.blur) {
+          activeElement.blur();
+        }
+        // Focus on chat input
+        const chatInput = document.getElementById('chat-input');
+        if (chatInput) {
+          chatInput.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Smooth scroll to bottom
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -966,11 +987,20 @@ export default function Dashboard({ user }) {
 
   return (
     <div className="min-h-screen bg-gradient-modern transition-all duration-300">
+      {/* Skip Link */}
+      <a 
+        href="#main-content" 
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:rounded-lg focus:font-medium"
+      >
+        Skip to main content
+      </a>
+      
       {/* Modern Top Navigation */}
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="glass-strong sticky top-0 z-50 border-b border-glass"
+        role="banner"
       >
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -1286,12 +1316,14 @@ export default function Dashboard({ user }) {
       </AnimatePresence>
 
       {/* Main Content with Sidebar */}
-      <main className="max-w-full mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8 flex gap-3 sm:gap-6">
+      <main id="main-content" className="max-w-full mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8 flex gap-3 sm:gap-6" role="main">
         {/* Desktop Sidebar */}
         <motion.aside
           initial={{ width: 256 }}
           animate={{ width: sidebarCollapsed ? 64 : 256 }}
           className="shrink-0 hidden md:flex md:flex-col glass rounded-xl shadow-lg h-[calc(100vh-180px)] transition-all duration-300 overflow-hidden border-glass"
+          role="complementary"
+          aria-label="Chat navigation sidebar"
         >
           {/* Navigation Header */}
           <div className="p-4 border-b border-glass">
@@ -1707,7 +1739,13 @@ export default function Dashboard({ user }) {
               </AnimatePresence>
 
               {/* Messages Container */}
-              <div className="flex-1 overflow-y-auto px-6 py-6">
+              <div 
+                className="flex-1 overflow-y-auto px-6 py-6"
+                role="log"
+                aria-label="Chat messages"
+                aria-live="polite"
+                aria-atomic="false"
+              >
                 <div className="max-w-4xl mx-auto space-y-6">
                   {/* Chat switching loader */}
                   {switchingChat && (
@@ -1803,20 +1841,27 @@ export default function Dashboard({ user }) {
                             damping: 30
                           }}
                           className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} group`}
+                          role="article"
+                          aria-label={`${message.role === 'user' ? 'Your message' : 'AI response'} ${index + 1}`}
+                          tabIndex={0}
                         >
                           <div className={`flex items-start gap-3 max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                             {/* Avatar */}
-                            <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                              message.role === 'user' 
-                                ? 'bg-gradient-to-br from-primary-500 to-primary-600' 
-                                : 'bg-gradient-to-br from-gray-400 to-gray-500 dark:from-gray-600 dark:to-gray-700'
-                            }`}>
+                            <div 
+                              className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                                message.role === 'user' 
+                                  ? 'bg-gradient-to-br from-primary-500 to-primary-600' 
+                                  : 'bg-gradient-to-br from-gray-400 to-gray-500 dark:from-gray-600 dark:to-gray-700'
+                              }`}
+                              role="img"
+                              aria-label={message.role === 'user' ? 'User avatar' : 'AI assistant avatar'}
+                            >
                               {message.role === 'user' ? (
-                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
                               ) : (
-                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                 </svg>
                               )}
@@ -1830,9 +1875,11 @@ export default function Dashboard({ user }) {
                                     ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-br-md'
                                     : 'glass text-white rounded-bl-md border-glass'
                                 }`}
+                                role="textbox"
+                                aria-label={`Message content: ${message.content.substring(0, 100)}${message.content.length > 100 ? '...' : ''}`}
                               >
                                 {message.role === 'user' ? (
-                                  <p className="whitespace-pre-wrap leading-relaxed pr-8">{message.content}</p>
+                                  <p className="whitespace-pre-wrap leading-relaxed pr-8 text-base font-medium">{message.content}</p>
                                 ) : message.isTyping ? (
                                   <div className="pr-8">
                                     <TypingMessage 
@@ -1841,7 +1888,7 @@ export default function Dashboard({ user }) {
                                     />
                                   </div>
                                 ) : (
-                                  <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-p:text-gray-800 dark:prose-p:text-gray-200 prose-code:text-gray-900 dark:prose-code:text-gray-100 prose-pre:bg-gray-100 dark:prose-pre:bg-gray-800 pr-8">
+                                  <div className="prose prose-base dark:prose-invert max-w-none prose-headings:text-white prose-headings:font-semibold prose-p:text-white prose-p:font-normal prose-code:text-white prose-code:bg-white/20 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-white/10 prose-pre:text-white prose-pre:border prose-pre:border-white/20 pr-8">
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
                                   </div>
                                 )}
@@ -1851,12 +1898,14 @@ export default function Dashboard({ user }) {
                                   onClick={() => copyMessage(message.content, `${activeThreadId}-${index}`)}
                                   whileHover={{ scale: 1.1 }}
                                   whileTap={{ scale: 0.9 }}
-                                  className={`absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover/message:opacity-100 transition-all duration-200 ${
+                                  className={`absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover/message:opacity-100 transition-all duration-200 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-white/50 ${
                                     message.role === 'user'
                                       ? 'bg-white/20 hover:bg-white/30 text-white'
                                       : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white'
                                   }`}
                                   title="Copy message"
+                                  aria-label={`Copy ${message.role === 'user' ? 'your' : 'AI'} message`}
+                                  tabIndex={0}
                                 >
                                   <AnimatePresence mode="wait">
                                     {copiedMessageId === `${activeThreadId}-${index}` ? (
@@ -1885,17 +1934,20 @@ export default function Dashboard({ user }) {
                               </div>
                               
                               {/* Timestamp and Status */}
-                              <div className={`text-xs px-2 flex items-center gap-2 ${
+                              <div className={`text-sm px-2 flex items-center gap-2 ${
                                 message.role === 'user' ? 'text-right justify-end' : 'text-left justify-start'
                               }`}>
                                 <motion.span
                                   key={`${message.timestamp}-${timestampRefresh}`}
-                                  className="text-white/60 hover:text-white/80 transition-colors duration-200 cursor-help"
+                                  className="text-white/70 hover:text-white/90 transition-colors duration-200 cursor-help focus:outline-none focus:ring-2 focus:ring-white/50 focus:rounded"
                                   title={formatFullTimestamp(message.timestamp)}
                                   whileHover={{ scale: 1.05 }}
                                   initial={{ opacity: 0.6 }}
                                   animate={{ opacity: 1 }}
                                   transition={{ duration: 0.2 }}
+                                  tabIndex={0}
+                                  role="text"
+                                  aria-label={`Message sent at ${formatFullTimestamp(message.timestamp)}`}
                                 >
                                   {formatTimestamp(message.timestamp)}
                                 </motion.span>
@@ -2083,10 +2135,14 @@ export default function Dashboard({ user }) {
                   </div>
 
                   {/* Input Form */}
-                  <form onSubmit={handleChatSubmit} className="relative px-6 pb-6">
+                  <form onSubmit={handleChatSubmit} className="relative px-6 pb-6" role="form" aria-label="Chat message form">
                     <div className="flex items-end gap-3">
                       <div className="flex-1 relative">
+                        <label htmlFor="chat-input" className="sr-only">
+                          Type your message
+                        </label>
                         <motion.textarea
+                          id="chat-input"
                           value={chatInput}
                           onChange={(e) => setChatInput(e.target.value)}
                           onKeyDown={(e) => {
@@ -2095,6 +2151,9 @@ export default function Dashboard({ user }) {
                               if (!chatLoading && credits >= 1) {
                                 handleChatSubmit(e);
                               }
+                            }
+                            if (e.key === 'Escape') {
+                              e.target.blur();
                             }
                           }}
                           placeholder="Type your message... (Enter to send, Shift+Enter for new line)"
@@ -2120,9 +2179,20 @@ export default function Dashboard({ user }) {
                               el.style.height = el.scrollHeight + 'px';
                             }
                           }}
+                          aria-describedby="char-count chat-instructions"
+                          aria-invalid={chatInput.length > 2000}
+                          maxLength={2000}
+                          aria-label="Type your message"
                         />
-                        <div className="absolute bottom-2 right-3 text-xs text-white/60">
+                        <div 
+                          id="char-count"
+                          className="absolute bottom-2 right-3 text-xs text-white/60"
+                          aria-live="polite"
+                        >
                           {chatInput.length}/2000
+                        </div>
+                        <div id="chat-instructions" className="sr-only">
+                          Press Enter to send message, Shift+Enter for new line, Escape to blur input
                         </div>
                       </div>
                       
@@ -2147,6 +2217,8 @@ export default function Dashboard({ user }) {
                           ease: "easeInOut"
                         }}
                         className="flex items-center justify-center w-12 h-12 text-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg relative overflow-hidden"
+                        aria-label={chatLoading ? "Sending message..." : "Send message"}
+                        aria-describedby="send-button-description"
                       >
                         <motion.div
                           className="absolute inset-0 bg-gradient-to-r from-purple-500 to-indigo-600"
@@ -2188,6 +2260,9 @@ export default function Dashboard({ user }) {
                       <span className="text-primary-600 dark:text-primary-400 font-medium">
                         1 credit per message
                       </span>
+                    </div>
+                    <div id="send-button-description" className="sr-only">
+                      Send your message. Disabled when no text or insufficient credits.
                     </div>
                   </form>
                 </div>
