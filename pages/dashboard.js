@@ -53,26 +53,26 @@ const TypingAnimation = () => (
     initial={{ opacity: 0, scale: 0.8 }}
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 0.8 }}
-    className="flex items-center gap-2 px-4 py-2"
+    className="flex items-center gap-3 px-5 py-4 bg-white/90 dark:bg-slate-700/90 rounded-2xl border border-slate-200/50 dark:border-slate-600/50 shadow-sm backdrop-blur-sm"
   >
     <div className="flex space-x-1">
       <motion.div
-        className="w-2 h-2 bg-gray-400 rounded-full"
-        animate={{ scale: [1, 1.2, 1] }}
-        transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
+        className="w-2 h-2 bg-blue-400 rounded-full"
+        animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
+        transition={{ duration: 0.8, repeat: Infinity, delay: 0 }}
       />
       <motion.div
-        className="w-2 h-2 bg-gray-400 rounded-full"
-        animate={{ scale: [1, 1.2, 1] }}
-        transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
+        className="w-2 h-2 bg-blue-400 rounded-full"
+        animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
+        transition={{ duration: 0.8, repeat: Infinity, delay: 0.2 }}
       />
       <motion.div
-        className="w-2 h-2 bg-gray-400 rounded-full"
-        animate={{ scale: [1, 1.2, 1] }}
-        transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }}
+        className="w-2 h-2 bg-blue-400 rounded-full"
+        animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
+        transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}
       />
     </div>
-    <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">AI is thinking...</span>
+    <span className="text-sm text-slate-600 dark:text-slate-300 font-medium">AI is thinking...</span>
   </motion.div>
 );
 
@@ -115,7 +115,7 @@ const MessageStatusIndicator = ({ status, messageId, onRetry }) => {
       case 'sending':
         return (
           <motion.div
-            className="w-3 h-3 sm:w-3 sm:h-3 border-2 border-white/40 border-t-white rounded-full"
+            className="w-3 h-3 sm:w-3 sm:h-3 border-2 border-blue-400/40 border-t-blue-500 rounded-full"
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
             aria-label="Message sending"
@@ -126,8 +126,8 @@ const MessageStatusIndicator = ({ status, messageId, onRetry }) => {
           <motion.div
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
-            transition={{ duration: 0.3, type: "spring" }}
-            className="w-3 h-3 sm:w-3 sm:h-3 bg-green-500 rounded-full flex items-center justify-center"
+            transition={{ duration: 0.4, type: "spring", stiffness: 300, damping: 20 }}
+            className="w-3 h-3 sm:w-3 sm:h-3 bg-emerald-500 rounded-full flex items-center justify-center shadow-sm"
             aria-label="Message sent successfully"
           >
             <Check className="w-2 h-2 text-white" />
@@ -138,8 +138,8 @@ const MessageStatusIndicator = ({ status, messageId, onRetry }) => {
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            transition={{ duration: 0.2 }}
-            className="w-3 h-3 sm:w-3 sm:h-3 bg-red-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"
+            transition={{ duration: 0.3, type: "spring" }}
+            className="w-3 h-3 sm:w-3 sm:h-3 bg-red-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-red-600 hover:scale-110 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-400/50 shadow-sm"
             onClick={onRetry}
             title="Click to retry"
             aria-label="Message failed, click to retry"
@@ -329,10 +329,19 @@ export default function Dashboard({ user }) {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ 
         behavior: 'smooth',
-        block: 'end'
+        block: 'end',
+        inline: 'nearest'
       });
     }
   };
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      scrollToBottom();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [messages.length]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -999,7 +1008,7 @@ export default function Dashboard({ user }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-modern transition-all duration-300">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900 transition-all duration-500">
       {/* Skip Link */}
       <a 
         href="#main-content" 
@@ -1012,7 +1021,7 @@ export default function Dashboard({ user }) {
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-strong sticky top-0 z-50 border-b border-glass"
+        className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 shadow-sm"
         role="banner"
       >
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
@@ -1329,12 +1338,12 @@ export default function Dashboard({ user }) {
       </AnimatePresence>
 
       {/* Main Content with Sidebar */}
-      <main id="main-content" className="max-w-full mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8 flex gap-3 sm:gap-6" role="main">
+      <main id="main-content" className="max-w-full mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 flex gap-4 sm:gap-6" role="main">
         {/* Desktop Sidebar */}
         <motion.aside
           initial={{ width: 256 }}
           animate={{ width: sidebarCollapsed ? 64 : 256 }}
-          className="shrink-0 hidden md:flex md:flex-col glass rounded-xl shadow-lg h-[calc(100vh-180px)] transition-all duration-300 overflow-hidden border-glass"
+          className="shrink-0 hidden md:flex md:flex-col bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 h-[calc(100vh-180px)] transition-all duration-300 overflow-hidden"
           role="complementary"
           aria-label="Chat navigation sidebar"
         >
@@ -1703,7 +1712,7 @@ export default function Dashboard({ user }) {
         <div className="flex-1 min-w-0">
           {activeTab === 'chat' ? (
             // Modern Chat Interface
-            <div className="relative w-full h-[calc(100vh-180px)] overflow-hidden glass rounded-xl border-glass">
+            <div className="relative w-full h-[calc(100vh-180px)] overflow-hidden bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50">
             {/* Background with subtle gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-purple-500/10 rounded-xl"></div>
             
@@ -1847,24 +1856,24 @@ export default function Dashboard({ user }) {
                           initial={{ opacity: 0, y: 20, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           transition={{ 
-                            duration: 0.4,
-                            delay: index * 0.1,
+                            duration: 0.5,
+                            delay: index * 0.05,
                             type: "spring",
-                            stiffness: 300,
-                            damping: 30
+                            stiffness: 400,
+                            damping: 25
                           }}
                           className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} group`}
                           role="article"
                           aria-label={`${message.role === 'user' ? 'Your message' : 'AI response'} ${index + 1}`}
                           tabIndex={0}
                         >
-                          <div className={`flex items-start gap-3 max-w-[85%] sm:max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                          <div className={`flex items-start gap-3 max-w-[90%] sm:max-w-[85%] md:max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                             {/* Avatar */}
                             <div 
-                              className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                              className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm ${
                                 message.role === 'user' 
-                                  ? 'bg-gradient-to-br from-primary-500 to-primary-600' 
-                                  : 'bg-gradient-to-br from-gray-400 to-gray-500 dark:from-gray-600 dark:to-gray-700'
+                                  ? 'bg-gradient-to-br from-blue-500 to-indigo-600' 
+                                  : 'bg-gradient-to-br from-slate-400 to-slate-500 dark:from-slate-600 dark:to-slate-700'
                               }`}
                               role="img"
                               aria-label={message.role === 'user' ? 'User avatar' : 'AI assistant avatar'}
@@ -1883,10 +1892,10 @@ export default function Dashboard({ user }) {
                             {/* Message Bubble */}
                             <div className="flex flex-col gap-1">
                               <div
-                                className={`relative px-4 py-3 rounded-2xl shadow-lg group/message ${
+                                className={`relative px-5 py-4 rounded-2xl shadow-lg group/message transition-all duration-200 hover:shadow-xl ${
                                   message.role === 'user'
-                                    ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-br-md'
-                                    : 'glass text-white rounded-bl-md border-glass'
+                                    ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-br-md shadow-blue-500/25'
+                                    : 'bg-white/90 dark:bg-slate-700/90 text-slate-800 dark:text-slate-100 rounded-bl-md border border-slate-200/50 dark:border-slate-600/50'
                                 }`}
                                 role="textbox"
                                 aria-label={`Message content: ${message.content.substring(0, 100)}${message.content.length > 100 ? '...' : ''}`}
@@ -1911,10 +1920,10 @@ export default function Dashboard({ user }) {
                                   onClick={() => copyMessage(message.content, `${activeThreadId}-${index}`)}
                                   whileHover={{ scale: 1.1 }}
                                   whileTap={{ scale: 0.9 }}
-                                  className={`absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover/message:opacity-100 transition-all duration-200 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-white/50 ${
+                                  className={`absolute top-3 right-3 p-2 rounded-lg opacity-0 group-hover/message:opacity-100 transition-all duration-200 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-400/50 hover:scale-110 ${
                                     message.role === 'user'
-                                      ? 'bg-white/20 hover:bg-white/30 text-white'
-                                      : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white'
+                                      ? 'bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm'
+                                      : 'bg-slate-100/80 dark:bg-slate-600/80 hover:bg-slate-200/80 dark:hover:bg-slate-500/80 text-slate-600 dark:text-slate-300 backdrop-blur-sm'
                                   }`}
                                   title="Copy message"
                                   aria-label={`Copy ${message.role === 'user' ? 'your' : 'AI'} message`}
@@ -1952,7 +1961,11 @@ export default function Dashboard({ user }) {
                               }`}>
                                 <motion.span
                                   key={`${message.timestamp}-${timestampRefresh}`}
-                                  className="text-white/70 hover:text-white/90 transition-colors duration-200 cursor-help focus:outline-none focus:ring-2 focus:ring-white/50 focus:rounded"
+                                  className={`text-xs font-medium transition-all duration-200 cursor-help focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:rounded px-2 py-1 rounded-md ${
+                                    message.role === 'user' 
+                                      ? 'text-white/70 hover:text-white/90 hover:bg-white/10' 
+                                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-600/30'
+                                  }`}
                                   title={formatFullTimestamp(message.timestamp)}
                                   whileHover={{ scale: 1.05 }}
                                   initial={{ opacity: 0.6 }}
@@ -2148,7 +2161,7 @@ export default function Dashboard({ user }) {
                   </div>
 
                   {/* Input Form */}
-                  <form onSubmit={handleChatSubmit} className="relative px-6 pb-6" role="form" aria-label="Chat message form">
+                  <form onSubmit={handleChatSubmit} className="relative px-6 pb-6 bg-gradient-to-t from-white/80 via-white/40 to-transparent dark:from-slate-800/80 dark:via-slate-800/40 backdrop-blur-sm" role="form" aria-label="Chat message form">
                     <div className="flex items-end gap-3">
                       <div className="flex-1 relative">
                         <label htmlFor="chat-input" className="sr-only">
@@ -2180,7 +2193,7 @@ export default function Dashboard({ user }) {
                             duration: 0.3,
                             ease: "easeInOut"
                           }}
-                          className="w-full px-4 py-3 pr-12 glass border-glass rounded-2xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent disabled:opacity-50 resize-none transition-all duration-200"
+                          className="w-full px-5 py-4 pr-12 bg-white/90 dark:bg-slate-700/90 border border-slate-200/50 dark:border-slate-600/50 rounded-2xl text-slate-800 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 disabled:opacity-50 resize-none transition-all duration-200 shadow-sm hover:shadow-md focus:shadow-lg backdrop-blur-sm"
                           style={{
                             minHeight: '48px',
                             maxHeight: '120px',
@@ -2229,12 +2242,12 @@ export default function Dashboard({ user }) {
                           duration: 0.3,
                           ease: "easeInOut"
                         }}
-                        className="flex items-center justify-center w-12 h-12 text-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg relative overflow-hidden"
+                        className="flex items-center justify-center w-12 h-12 text-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400/50 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl relative overflow-hidden transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
                         aria-label={chatLoading ? "Sending message..." : "Send message"}
                         aria-describedby="send-button-description"
                       >
                         <motion.div
-                          className="absolute inset-0 bg-gradient-to-r from-purple-500 to-indigo-600"
+                          className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-600"
                           animate={{
                             scale: chatInput.trim() ? [1, 1.1, 1] : 1,
                             opacity: chatInput.trim() ? [1, 0.8, 1] : 1
@@ -2589,7 +2602,7 @@ export default function Dashboard({ user }) {
               damping: 30,
               duration: 0.3 
             }}
-            className="fixed bottom-6 right-6 z-50 glass border-glass rounded-xl px-4 py-3 shadow-lg backdrop-blur-sm"
+            className="fixed bottom-6 right-6 z-50 bg-white/90 dark:bg-slate-800/90 border border-slate-200/50 dark:border-slate-700/50 rounded-2xl px-5 py-4 shadow-xl backdrop-blur-xl"
           >
             <div className="flex items-center gap-3">
               <motion.div
