@@ -12,7 +12,7 @@ import { getChatTemplates, getImageTemplates } from '../lib/templates';
 import { getUserCredits, deductCredits } from '../lib/credits';
 import CreditsModal from '../components/CreditsModal';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Image as ImageIcon, Sparkles, Library, User, Coins, Clock, Zap, Bug, Menu, X, Home, Settings, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MessageSquare, Image as ImageIcon, Sparkles, Library, User, Coins, Clock, Zap, Bug, Menu, X, Home, Settings, LogOut, ChevronLeft, ChevronRight, Plus, Search, MoreVertical, Edit3, Trash2, Calendar } from 'lucide-react';
 import FeedbackModal from '../components/FeedbackModal';
 import ShareButton from '../components/ShareButton';
 
@@ -818,93 +818,124 @@ export default function Dashboard({ user }) {
               className="fixed left-0 top-0 h-full w-80 glass-dark shadow-xl z-50 md:hidden flex flex-col"
             >
               {/* Mobile Sidebar Content */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between p-4 border-b border-white/20">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-purple-600 rounded-lg flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-white" />
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Sparkles className="w-6 h-6 text-white" />
                   </div>
-                  <span className="font-semibold text-gray-900 dark:text-white">Nova AI</span>
+                  <div>
+                    <span className="font-bold text-white text-lg">Nova AI</span>
+                    <p className="text-xs text-white/60">AI Assistant</p>
+                  </div>
                 </div>
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => setSidebarOpen(false)}
-                  className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                  className="p-2 text-white/60 hover:text-white hover:bg-white/20 rounded-lg transition-all duration-200"
                 >
                   <X className="w-5 h-5" />
-                </button>
+                </motion.button>
               </div>
               
               {/* Mobile Sidebar Navigation */}
               <div className="flex-1 overflow-y-auto p-4 space-y-2">
                 {/* Navigation Items */}
                 <div className="space-y-1">
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => { setActiveTab('chat'); setSidebarOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                       activeTab === 'chat'
-                        ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm'
+                        : 'text-white/80 hover:text-white hover:bg-white/10 hover:shadow-md'
                     }`}
                   >
-                    <MessageSquare className="w-5 h-5" />
-                    <span>Chat</span>
-                  </button>
+                    <div className={`p-1 rounded-lg ${
+                      activeTab === 'chat' ? 'bg-white/20' : 'group-hover:bg-white/10'
+                    }`}>
+                      <MessageSquare className="w-5 h-5" />
+                    </div>
+                    <span className="font-medium">Chat</span>
+                  </motion.button>
                   
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => { setActiveTab('image'); setSidebarOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                       activeTab === 'image'
-                        ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm'
+                        : 'text-white/80 hover:text-white hover:bg-white/10 hover:shadow-md'
                     }`}
                   >
-                    <ImageIcon className="w-5 h-5" />
-                    <span>Image Generator</span>
-                  </button>
+                    <div className={`p-1 rounded-lg ${
+                      activeTab === 'image' ? 'bg-white/20' : 'group-hover:bg-white/10'
+                    }`}>
+                      <ImageIcon className="w-5 h-5" />
+                    </div>
+                    <span className="font-medium">Images</span>
+                  </motion.button>
                   
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => { setActiveTab('library'); setSidebarOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                       activeTab === 'library'
-                        ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm'
+                        : 'text-white/80 hover:text-white hover:bg-white/10 hover:shadow-md'
                     }`}
                   >
-                    <Library className="w-5 h-5" />
-                    <span>Library</span>
-                  </button>
+                    <div className={`p-1 rounded-lg ${
+                      activeTab === 'library' ? 'bg-white/20' : 'group-hover:bg-white/10'
+                    }`}>
+                      <Library className="w-5 h-5" />
+                    </div>
+                    <span className="font-medium">Library</span>
+                  </motion.button>
                   
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => { router.push('/my-ais'); setSidebarOpen(false); }}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200 hover:shadow-md"
                   >
-                    <User className="w-5 h-5" />
-                    <span>My AIs</span>
-                  </button>
+                    <div className="p-1 rounded-lg group-hover:bg-white/10">
+                      <User className="w-5 h-5" />
+                    </div>
+                    <span className="font-medium">My AIs</span>
+                  </motion.button>
                   
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => { router.push('/profile'); setSidebarOpen(false); }}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200 hover:shadow-md"
                   >
-                    <Settings className="w-5 h-5" />
-                    <span>Profile</span>
-                  </button>
+                    <div className="p-1 rounded-lg group-hover:bg-white/10">
+                      <Settings className="w-5 h-5" />
+                    </div>
+                    <span className="font-medium">Profile</span>
+                  </motion.button>
                 </div>
 
                 {/* Divider */}
-                <div className="border-t border-gray-200 dark:border-gray-700 my-4"></div>
+                <div className="border-t border-white/20 my-4"></div>
 
                 {/* Chat History */}
                 <div>
                   <div className="flex items-center justify-between px-3 py-2">
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Recent Chats</h3>
-                    <button
+                    <h3 className="text-sm font-semibold text-white">Recent Chats</h3>
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
                       onClick={() => { handleNewChat(); setSidebarOpen(false); }}
-                      className="p-1 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded"
+                      className="p-2 text-white/60 hover:text-white hover:bg-white/20 rounded-lg transition-all duration-200"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                    </button>
+                      <Plus className="w-4 h-4" />
+                    </motion.button>
                   </div>
                   
                   <div className="space-y-1 max-h-60 overflow-y-auto">
@@ -914,18 +945,23 @@ export default function Dashboard({ user }) {
                         onClick={() => { handleChatSwitch(thread.id); setSidebarOpen(false); }}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className={`group relative w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
+                        className={`group relative w-full text-left px-3 py-2.5 rounded-xl text-sm transition-all duration-200 ${
                           activeThreadId === thread.id
-                            ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 shadow-sm'
-                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-sm'
+                            ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm'
+                            : 'hover:bg-white/10 text-white/80 hover:text-white hover:shadow-md'
                         }`}
                         title={thread.title || 'New Chat'}
                       >
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-primary-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="flex items-center gap-3">
+                          <div className={`p-1 rounded-lg ${
+                            activeThreadId === thread.id ? 'bg-white/20' : 'group-hover:bg-white/10'
+                          }`}>
+                            <MessageSquare className="w-4 h-4" />
+                          </div>
                           <div className="flex-1 min-w-0">
                             <div className="truncate font-medium">{thread.title || 'New Chat'}</div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                            <div className="text-xs text-white/60 flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
                               {new Date(thread.updatedAt).toLocaleDateString([], { 
                                 month: 'short', 
                                 day: 'numeric'
@@ -939,7 +975,7 @@ export default function Dashboard({ user }) {
                           <motion.div
                             initial={{ opacity: 0, scale: 0 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="absolute right-2 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-primary-500 rounded-full"
+                            className="absolute right-2 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-white rounded-full shadow-sm"
                           />
                         )}
                       </motion.button>
@@ -961,28 +997,35 @@ export default function Dashboard({ user }) {
           className="shrink-0 hidden md:flex md:flex-col glass rounded-xl shadow-lg h-[calc(100vh-180px)] transition-all duration-300 overflow-hidden border-glass"
         >
           {/* Navigation Header */}
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="p-4 border-b border-glass">
             {!sidebarCollapsed ? (
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-white" />
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-3"
+              >
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Sparkles className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h2 className="font-semibold text-gray-900 dark:text-white">Nova AI</h2>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Chat Platform</p>
+                  <h2 className="font-bold text-white text-lg">Nova AI</h2>
+                  <p className="text-xs text-white/60">AI Assistant</p>
                 </div>
-              </div>
+              </motion.div>
             ) : (
               <div className="flex justify-center">
-                <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-white" />
-                </div>
+                <motion.div 
+                  whileHover={{ scale: 1.05 }}
+                  className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg"
+                >
+                  <Sparkles className="w-6 h-6 text-white" />
+                </motion.div>
               </div>
             )}
           </div>
 
           {/* Navigation Items */}
-          <div className="p-3 space-y-1">
+          <div className="px-3 py-2 space-y-1">
             <motion.button
               onClick={() => setActiveTab('chat')}
               whileHover={{ 
@@ -990,10 +1033,10 @@ export default function Dashboard({ user }) {
                 x: sidebarCollapsed ? 0 : 4
               }}
               whileTap={{ scale: 0.98 }}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                 activeTab === 'chat'
-                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 shadow-sm'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-sm'
+                  ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm'
+                  : 'text-white/80 hover:text-white hover:bg-white/10 hover:shadow-md'
               }`}
               title={sidebarCollapsed ? 'Chat' : ''}
             >
@@ -1006,10 +1049,13 @@ export default function Dashboard({ user }) {
                   duration: 0.5,
                   ease: "easeInOut"
                 }}
+                className={`p-1 rounded-lg ${
+                  activeTab === 'chat' ? 'bg-white/20' : 'group-hover:bg-white/10'
+                }`}
               >
-                <MessageSquare className="w-5 h-5 flex-shrink-0" />
+                <MessageSquare className="w-5 h-5" />
               </motion.div>
-              {!sidebarCollapsed && <span>Chat</span>}
+              {!sidebarCollapsed && <span className="font-medium">Chat</span>}
             </motion.button>
             
             <motion.button
@@ -1019,10 +1065,10 @@ export default function Dashboard({ user }) {
                 x: sidebarCollapsed ? 0 : 4
               }}
               whileTap={{ scale: 0.98 }}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                 activeTab === 'image'
-                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 shadow-sm'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-sm'
+                  ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm'
+                  : 'text-white/80 hover:text-white hover:bg-white/10 hover:shadow-md'
               }`}
               title={sidebarCollapsed ? 'Image Generator' : ''}
             >
@@ -1035,10 +1081,13 @@ export default function Dashboard({ user }) {
                   duration: 0.5,
                   ease: "easeInOut"
                 }}
+                className={`p-1 rounded-lg ${
+                  activeTab === 'image' ? 'bg-white/20' : 'group-hover:bg-white/10'
+                }`}
               >
-                <ImageIcon className="w-5 h-5 flex-shrink-0" />
+                <ImageIcon className="w-5 h-5" />
               </motion.div>
-              {!sidebarCollapsed && <span>Image Generator</span>}
+              {!sidebarCollapsed && <span className="font-medium">Images</span>}
             </motion.button>
             
             <motion.button
@@ -1048,10 +1097,10 @@ export default function Dashboard({ user }) {
                 x: sidebarCollapsed ? 0 : 4
               }}
               whileTap={{ scale: 0.98 }}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                 activeTab === 'library'
-                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 shadow-sm'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-sm'
+                  ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm'
+                  : 'text-white/80 hover:text-white hover:bg-white/10 hover:shadow-md'
               }`}
               title={sidebarCollapsed ? 'Library' : ''}
             >
@@ -1064,10 +1113,13 @@ export default function Dashboard({ user }) {
                   duration: 0.5,
                   ease: "easeInOut"
                 }}
+                className={`p-1 rounded-lg ${
+                  activeTab === 'library' ? 'bg-white/20' : 'group-hover:bg-white/10'
+                }`}
               >
-                <Library className="w-5 h-5 flex-shrink-0" />
+                <Library className="w-5 h-5" />
               </motion.div>
-              {!sidebarCollapsed && <span>Library</span>}
+              {!sidebarCollapsed && <span className="font-medium">Library</span>}
             </motion.button>
 
             <motion.button
@@ -1077,31 +1129,33 @@ export default function Dashboard({ user }) {
                 x: sidebarCollapsed ? 0 : 4
               }}
               whileTap={{ scale: 0.98 }}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 hover:shadow-sm"
+              className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200 hover:shadow-md"
               title={sidebarCollapsed ? 'My AIs' : ''}
             >
-              <User className="w-5 h-5 flex-shrink-0" />
-              {!sidebarCollapsed && <span>My AIs</span>}
+              <div className="p-1 rounded-lg group-hover:bg-white/10">
+                <User className="w-5 h-5" />
+              </div>
+              {!sidebarCollapsed && <span className="font-medium">My AIs</span>}
             </motion.button>
           </div>
 
           {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-700"></div>
+          <div className="mx-3 border-t border-white/20"></div>
 
           {/* New Chat Button */}
           <div className="p-3">
             <motion.button 
               onClick={handleNewChat}
               whileHover={{ 
-                scale: 1.02,
-                boxShadow: "0 8px 25px rgba(147, 51, 234, 0.3)"
+                scale: 1.05,
+                boxShadow: "0 12px 30px rgba(147, 51, 234, 0.4)"
               }}
-              whileTap={{ scale: 0.98 }}
+              whileTap={{ scale: 0.95 }}
               animate={{
                 boxShadow: [
-                  "0 4px 15px rgba(147, 51, 234, 0.2)",
                   "0 6px 20px rgba(147, 51, 234, 0.3)",
-                  "0 4px 15px rgba(147, 51, 234, 0.2)"
+                  "0 8px 25px rgba(147, 51, 234, 0.4)",
+                  "0 6px 20px rgba(147, 51, 234, 0.3)"
                 ]
               }}
               transition={{
@@ -1109,16 +1163,12 @@ export default function Dashboard({ user }) {
                 repeat: Infinity,
                 ease: "easeInOut"
               }}
-              className="w-full flex items-center gap-3 px-3 py-2 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-all duration-200"
+              className="group w-full flex items-center gap-3 px-4 py-3 text-sm bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl transition-all duration-200 shadow-lg backdrop-blur-sm"
               title={sidebarCollapsed ? 'New Chat' : ''}
             >
-              <motion.svg 
-                className="w-5 h-5 flex-shrink-0" 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
+              <motion.div
                 animate={{
-                  rotate: [0, 90, 0],
+                  rotate: [0, 180, 360],
                   scale: [1, 1.1, 1]
                 }}
                 transition={{
@@ -1126,26 +1176,25 @@ export default function Dashboard({ user }) {
                   repeat: Infinity,
                   ease: "easeInOut"
                 }}
+                className="p-1 rounded-lg bg-white/20"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </motion.svg>
-              {!sidebarCollapsed && <span className="font-medium">New Chat</span>}
+                <Plus className="w-5 h-5" />
+              </motion.div>
+              {!sidebarCollapsed && <span className="font-semibold">New Chat</span>}
             </motion.button>
           </div>
 
           {/* Search Chats */}
           {!sidebarCollapsed && (
-            <div className="p-3 border-t border-gray-200 dark:border-gray-700">
+            <div className="px-3 py-2 border-t border-white/20">
               <div className="relative">
-                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
                 <input
                   type="text"
                   placeholder="Search chats"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 border-0 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full pl-10 pr-3 py-2.5 text-sm bg-white/10 text-white placeholder-white/60 border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/20 transition-all duration-200 backdrop-blur-sm"
                 />
               </div>
             </div>
@@ -1209,18 +1258,23 @@ export default function Dashboard({ user }) {
                               x: 4
                             }}
                             whileTap={{ scale: 0.98 }}
-                            className={`group relative w-full text-left px-3 py-2 rounded-md text-sm transition-all duration-200 ${
+                            className={`group relative w-full text-left px-3 py-2.5 rounded-xl text-sm transition-all duration-200 ${
                               activeThreadId === t.id
-                                ? 'bg-primary-50 dark:bg-gray-700 text-primary-700 dark:text-white shadow-sm'
-                                : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-200 hover:shadow-sm'
+                                ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm'
+                                : 'hover:bg-white/10 text-white/80 hover:text-white hover:shadow-md'
                             }`}
                             title={t.title || 'New Chat'} // Tooltip for full title
                           >
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-primary-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="flex items-center gap-3">
+                              <div className={`p-1 rounded-lg ${
+                                activeThreadId === t.id ? 'bg-white/20' : 'group-hover:bg-white/10'
+                              }`}>
+                                <MessageSquare className="w-4 h-4" />
+                              </div>
                               <div className="flex-1 min-w-0">
                                 <div className="truncate pr-8 font-medium">{t.title || 'New Chat'}</div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                <div className="text-xs text-white/60 flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
                                   {new Date(t.updatedAt).toLocaleDateString([], { 
                                     month: 'short', 
                                     day: 'numeric',
@@ -1236,7 +1290,7 @@ export default function Dashboard({ user }) {
                               <motion.div
                                 initial={{ opacity: 0, scale: 0 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                className="absolute right-2 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-primary-500 rounded-full"
+                                className="absolute right-2 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-white rounded-full shadow-sm"
                               />
                             )}
                           </motion.button>
@@ -1245,40 +1299,53 @@ export default function Dashboard({ user }) {
                           {hoveredThread === t.id && (
                             <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
                               <div className="relative">
-                                <button
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    // Toggle menu
+                                    setShowMenu(showMenu === t.id ? null : t.id);
                                   }}
-                                  className="p-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                                  className="p-1.5 text-white/60 hover:text-white hover:bg-white/20 rounded-lg transition-all duration-200"
                                 >
-                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                                  </svg>
-                                </button>
+                                  <MoreVertical className="w-4 h-4" />
+                                </motion.button>
                                 
                                 {/* Dropdown menu */}
-                                <div className="absolute right-0 top-full mt-1 w-32 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-10">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setEditingThread(t.id);
-                                      setEditTitle(t.title || 'New Chat');
-                                    }}
-                                    className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 first:rounded-t-md"
+                                {showMenu === t.id && (
+                                  <motion.div
+                                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                                    className="absolute right-0 top-full mt-1 w-36 glass border-glass rounded-xl shadow-lg py-2 z-10"
                                   >
-                                    Rename
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      confirmDeleteThread(t);
-                                    }}
-                                    className="w-full text-left px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 last:rounded-b-md"
-                                  >
-                                    Delete
-                                  </button>
-                                </div>
+                                    <motion.button
+                                      whileHover={{ scale: 1.02 }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditingThread(t.id);
+                                        setEditTitle(t.title || 'New Chat');
+                                        setShowMenu(null);
+                                      }}
+                                      className="w-full text-left px-3 py-2 text-sm text-white/80 hover:text-white hover:bg-white/10 flex items-center gap-2 transition-all duration-200"
+                                    >
+                                      <Edit3 className="w-4 h-4" />
+                                      Rename
+                                    </motion.button>
+                                    <motion.button
+                                      whileHover={{ scale: 1.02 }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        confirmDeleteThread(t);
+                                        setShowMenu(null);
+                                      }}
+                                      className="w-full text-left px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 flex items-center gap-2 transition-all duration-200"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                      Delete
+                                    </motion.button>
+                                  </motion.div>
+                                )}
                               </div>
                             </div>
                           )}
