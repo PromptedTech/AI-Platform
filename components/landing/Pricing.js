@@ -6,7 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 const plans = [
   {
     name: 'Free',
-    price: '$0',
+    price: '₹0',
     period: 'forever',
     description: 'Perfect for getting started',
     icon: Zap,
@@ -24,15 +24,15 @@ const plans = [
   },
   {
     name: 'Credit Packs',
-    price: '$5',
+    price: '₹99',
     period: 'per 100 credits',
     description: 'Pay as you grow',
     icon: Crown,
     gradient: 'from-purple-500 to-pink-500',
     features: [
-      '100 credits for $5',
-      '500 credits for $20',
-      '1000 credits for $35',
+      '100 credits for ₹99',
+      '500 credits for ₹399',
+      '1000 credits for ₹699',
       'Never expires',
       'Daily login rewards',
       'Priority support',
