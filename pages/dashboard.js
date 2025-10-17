@@ -16,6 +16,67 @@ import { MessageSquare, Image as ImageIcon, Sparkles, Library, User, Coins, Cloc
 import FeedbackModal from '../components/FeedbackModal';
 import ShareButton from '../components/ShareButton';
 
+// Typing Animation Component
+const TypingAnimation = () => (
+  <motion.div
+    initial={{ opacity: 0, scale: 0.8 }}
+    animate={{ opacity: 1, scale: 1 }}
+    exit={{ opacity: 0, scale: 0.8 }}
+    className="flex items-center gap-2 px-4 py-2"
+  >
+    <div className="flex space-x-1">
+      <motion.div
+        className="w-2 h-2 bg-gray-400 rounded-full"
+        animate={{ scale: [1, 1.2, 1] }}
+        transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
+      />
+      <motion.div
+        className="w-2 h-2 bg-gray-400 rounded-full"
+        animate={{ scale: [1, 1.2, 1] }}
+        transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
+      />
+      <motion.div
+        className="w-2 h-2 bg-gray-400 rounded-full"
+        animate={{ scale: [1, 1.2, 1] }}
+        transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }}
+      />
+    </div>
+    <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">AI is thinking...</span>
+  </motion.div>
+);
+
+// Typing Effect Component for AI Messages
+const TypingMessage = ({ message, onComplete }) => {
+  const [displayedText, setDisplayedText] = useState('');
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (currentIndex < message.length) {
+      const timer = setTimeout(() => {
+        setDisplayedText(prev => prev + message[currentIndex]);
+        setCurrentIndex(prev => prev + 1);
+      }, 20); // Adjust speed here (lower = faster typing)
+
+      return () => clearTimeout(timer);
+    } else if (onComplete) {
+      onComplete();
+    }
+  }, [currentIndex, message, onComplete]);
+
+  return (
+    <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-p:text-gray-800 dark:prose-p:text-gray-200 prose-code:text-gray-900 dark:prose-code:text-gray-100 prose-pre:bg-gray-100 dark:prose-pre:bg-gray-800">
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayedText}</ReactMarkdown>
+      {currentIndex < message.length && (
+        <motion.span
+          className="inline-block w-2 h-4 bg-primary-500 ml-1"
+          animate={{ opacity: [0, 1, 0] }}
+          transition={{ duration: 0.8, repeat: Infinity }}
+        />
+      )}
+    </div>
+  );
+};
+
 export default function Dashboard({ user }) {
   const { isDark, toggleTheme } = useTheme();
   const router = useRouter();
@@ -109,6 +170,8 @@ export default function Dashboard({ user }) {
   const [messages, setMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
+  const [typingMessage, setTypingMessage] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
   
   // Image generation state
   const [imagePrompt, setImagePrompt] = useState('');
@@ -313,6 +376,17 @@ export default function Dashboard({ user }) {
     }
   };
 
+  // Handle typing completion
+  const handleTypingComplete = (messageIndex) => {
+    setMessages(prev => 
+      prev.map((msg, idx) => 
+        idx === messageIndex && msg.isTyping 
+          ? { ...msg, isTyping: false }
+          : msg
+      )
+    );
+  };
+
   // Handle chat submission
   const handleChatSubmit = async (e) => {
     e.preventDefault();
@@ -404,8 +478,13 @@ export default function Dashboard({ user }) {
              // Track analytics
              try { await trackChat(user.uid); } catch (e) { console.warn('trackChat failed', e); }
       await updateDoc(doc(db, 'threads', threadId), { updatedAt: new Date().toISOString() });
-      // Optimistically render assistant message
-      setMessages([...updatedMessages, assistantMessage]);
+      
+      // Start typing animation
+      setIsTyping(true);
+      setTypingMessage(response.data.reply);
+      
+      // Add assistant message with typing flag
+      setMessages([...updatedMessages, { ...assistantMessage, isTyping: true }]);
       // capture total time
       const totalSecs = Math.max(1, Math.floor((Date.now() - thinkStartRef.current) / 1000));
       setLastResponseTime(totalSecs);
@@ -430,6 +509,7 @@ export default function Dashboard({ user }) {
       }
     } finally {
       setChatLoading(false);
+      setIsTyping(false);
       if (thinkTimerRef.current) {
         clearInterval(thinkTimerRef.current);
         thinkTimerRef.current = null;
@@ -959,6 +1039,11 @@ export default function Dashboard({ user }) {
                               >
                                 {message.role === 'user' ? (
                                   <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                                ) : message.isTyping ? (
+                                  <TypingMessage 
+                                    message={message.content} 
+                                    onComplete={() => handleTypingComplete(index)}
+                                  />
                                 ) : (
                                   <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-p:text-gray-800 dark:prose-p:text-gray-200 prose-code:text-gray-900 dark:prose-code:text-gray-100 prose-pre:bg-gray-100 dark:prose-pre:bg-gray-800">
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
@@ -992,7 +1077,7 @@ export default function Dashboard({ user }) {
                     </AnimatePresence>
                   )}
 
-                  {/* Loading Animation */}
+                  {/* Enhanced Loading Animation */}
                   <AnimatePresence>
                     {chatLoading && (
                       <motion.div
@@ -1008,16 +1093,12 @@ export default function Dashboard({ user }) {
                             </svg>
                           </div>
                           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
-                            <div className="flex items-center gap-2">
-                              <div className="flex space-x-1">
-                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                            <TypingAnimation />
+                            {thinkElapsed > 0 && (
+                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Processing for {thinkElapsed}s...
                               </div>
-                              <span className="text-sm text-gray-600 dark:text-gray-400">
-                                {thinkElapsed > 0 ? `Thinking for ${thinkElapsed}s...` : 'Thinking...'}
-                              </span>
-                            </div>
+                            )}
                           </div>
                         </div>
                       </motion.div>
