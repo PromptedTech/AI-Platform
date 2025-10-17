@@ -115,9 +115,10 @@ const MessageStatusIndicator = ({ status, messageId, onRetry }) => {
       case 'sending':
         return (
           <motion.div
-            className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full"
+            className="w-3 h-3 sm:w-3 sm:h-3 border-2 border-white/40 border-t-white rounded-full"
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            aria-label="Message sending"
           />
         );
       case 'success':
@@ -126,7 +127,8 @@ const MessageStatusIndicator = ({ status, messageId, onRetry }) => {
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ duration: 0.3, type: "spring" }}
-            className="w-3 h-3 bg-green-500 rounded-full flex items-center justify-center"
+            className="w-3 h-3 sm:w-3 sm:h-3 bg-green-500 rounded-full flex items-center justify-center"
+            aria-label="Message sent successfully"
           >
             <Check className="w-2 h-2 text-white" />
           </motion.div>
@@ -137,9 +139,11 @@ const MessageStatusIndicator = ({ status, messageId, onRetry }) => {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.2 }}
-            className="w-3 h-3 bg-red-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors"
+            className="w-3 h-3 sm:w-3 sm:h-3 bg-red-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"
             onClick={onRetry}
             title="Click to retry"
+            aria-label="Message failed, click to retry"
+            tabIndex={0}
           >
             <X className="w-2 h-2 text-white" />
           </motion.div>
@@ -303,6 +307,15 @@ export default function Dashboard({ user }) {
         const chatInput = document.getElementById('chat-input');
         if (chatInput) {
           chatInput.focus();
+        }
+      }
+      
+      // Handle Tab navigation for messages
+      if (e.key === 'Tab' && e.shiftKey === false) {
+        const focusedElement = document.activeElement;
+        if (focusedElement && focusedElement.getAttribute('role') === 'article') {
+          // If focused on a message, allow natural tab flow
+          return;
         }
       }
     };
@@ -1845,7 +1858,7 @@ export default function Dashboard({ user }) {
                           aria-label={`${message.role === 'user' ? 'Your message' : 'AI response'} ${index + 1}`}
                           tabIndex={0}
                         >
-                          <div className={`flex items-start gap-3 max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                          <div className={`flex items-start gap-3 max-w-[85%] sm:max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                             {/* Avatar */}
                             <div 
                               className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
@@ -1879,16 +1892,16 @@ export default function Dashboard({ user }) {
                                 aria-label={`Message content: ${message.content.substring(0, 100)}${message.content.length > 100 ? '...' : ''}`}
                               >
                                 {message.role === 'user' ? (
-                                  <p className="whitespace-pre-wrap leading-relaxed pr-8 text-base font-medium">{message.content}</p>
+                                  <p className="whitespace-pre-wrap leading-relaxed pr-12 text-base font-medium">{message.content}</p>
                                 ) : message.isTyping ? (
-                                  <div className="pr-8">
+                                  <div className="pr-12">
                                     <TypingMessage 
                                       message={message.content} 
                                       onComplete={() => handleTypingComplete(index)}
                                     />
                                   </div>
                                 ) : (
-                                  <div className="prose prose-base dark:prose-invert max-w-none prose-headings:text-white prose-headings:font-semibold prose-p:text-white prose-p:font-normal prose-code:text-white prose-code:bg-white/20 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-white/10 prose-pre:text-white prose-pre:border prose-pre:border-white/20 pr-8">
+                                  <div className="prose prose-base dark:prose-invert max-w-none prose-headings:text-white prose-headings:font-semibold prose-p:text-white prose-p:font-normal prose-code:text-white prose-code:bg-white/20 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-white/10 prose-pre:text-white prose-pre:border prose-pre:border-white/20 pr-12">
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
                                   </div>
                                 )}
