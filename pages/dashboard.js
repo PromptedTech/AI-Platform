@@ -88,10 +88,6 @@ export default function Dashboard({ user }) {
   // Threads (chat history)
   const [threads, setThreads] = useState([]); // [{id, title, updatedAt}]
   const [activeThreadId, setActiveThreadId] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [hoveredThread, setHoveredThread] = useState(null);
-  const [editingThread, setEditingThread] = useState(null);
-  const [editTitle, setEditTitle] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [threadToDelete, setThreadToDelete] = useState(null);
   // Templates
@@ -178,6 +174,13 @@ export default function Dashboard({ user }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [inputPulse, setInputPulse] = useState(false);
   const messagesEndRef = useRef(null);
+  
+  // Chat history management
+  const [searchQuery, setSearchQuery] = useState('');
+  const [hoveredThread, setHoveredThread] = useState(null);
+  const [editingThread, setEditingThread] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [switchingChat, setSwitchingChat] = useState(false);
 
   // Smooth scroll to bottom
   const scrollToBottom = () => {
@@ -256,28 +259,41 @@ export default function Dashboard({ user }) {
     return () => unsubPersonas();
   }, [user]);
 
-  // Load messages for active thread
+  // Load messages for active thread from chat document
   useEffect(() => {
     if (!user || !activeThreadId) return;
-    const qMsgs = query(
-      collection(db, 'chats'),
-      where('userId', '==', user.uid),
-      where('threadId', '==', activeThreadId),
-      orderBy('timestamp', 'asc')
-    );
-    const unsub = onSnapshot(qMsgs, (snap) => {
-      const list = [];
-      snap.forEach((d) => {
-        const data = d.data();
-        list.push({ role: data.role, content: data.content, timestamp: data.timestamp });
-      });
-      setMessages(list);
+    
+    const chatRef = doc(db, 'chats', activeThreadId);
+    const unsub = onSnapshot(chatRef, (doc) => {
+      if (doc.exists()) {
+        const chatData = doc.data();
+        const messages = (chatData.messages || []).map((msg, index) => ({
+          role: msg.role,
+          content: msg.text,
+          timestamp: msg.timestamp,
+        }));
+        setMessages(messages);
+      } else {
+        setMessages([]);
+      }
     });
     return () => unsub();
   }, [user, activeThreadId]);
   const deriveTitle = (text) => {
     const t = (text || '').replace(/\n/g, ' ').trim();
     return t.length > 40 ? t.slice(0, 40) + '…' : t || 'New Chat';
+  };
+
+  // Handle chat switching with smooth transitions
+  const handleChatSwitch = async (threadId) => {
+    setSwitchingChat(true);
+    setActiveThreadId(threadId);
+    setMessages([]); // Clear current messages for smooth transition
+    
+    // Small delay for smooth transition effect
+    setTimeout(() => {
+      setSwitchingChat(false);
+    }, 200);
   };
 
   const ensureActiveThread = async () => {
@@ -297,18 +313,35 @@ export default function Dashboard({ user }) {
 
   const handleNewChat = async () => {
     if (!user) return;
-    const id = await ensureActiveThread();
-    // Start a fresh thread regardless
+    
+    // Create new chat document
     const newId = crypto.randomUUID();
     const now = new Date().toISOString();
-    await setDoc(doc(db, 'threads', newId), {
-      userId: user.uid,
-      title: 'New Chat',
-      createdAt: now,
-      updatedAt: now,
-    });
-    setActiveThreadId(newId);
-    setMessages([]);
+    
+    try {
+      await setDoc(doc(db, 'chats', newId), {
+        chatId: newId,
+        userId: user.uid,
+        title: 'New Chat',
+        messages: [],
+        createdAt: now,
+        updatedAt: now,
+      });
+      
+      // Also create thread document for sidebar
+      await setDoc(doc(db, 'threads', newId), {
+        userId: user.uid,
+        title: 'New Chat',
+        chatId: newId,
+        createdAt: now,
+        updatedAt: now,
+      });
+      
+      setActiveThreadId(newId);
+      setMessages([]);
+    } catch (error) {
+      console.error('Error creating new chat:', error);
+    }
   };
 
   const handleRenameThread = async (threadId, newTitle) => {
@@ -456,24 +489,40 @@ export default function Dashboard({ user }) {
     }, 1000);
 
     try {
-      // Save user message to Firestore
-      await addDoc(collection(db, 'chats'), {
-        userId: user.uid,
-        threadId,
-        role: 'user',
-        content: userMessage.content,
-        timestamp: new Date().toISOString(),
-      });
-      // Update thread metadata (title on first message)
-      const tRef = doc(db, 'threads', threadId);
-      const tSnap = await getDoc(tRef);
+      // Get current chat document and update it
+      const chatRef = doc(db, 'chats', threadId);
+      const chatDoc = await getDoc(chatRef);
       const nowIso = new Date().toISOString();
-      if (tSnap.exists()) {
-        const current = tSnap.data();
-        await updateDoc(tRef, {
+      
+      if (chatDoc.exists()) {
+        const currentMessages = chatDoc.data().messages || [];
+        
+        // Add user message
+        const updatedMessages = [
+          ...currentMessages,
+          {
+            role: 'user',
+            text: userMessage.content,
+            timestamp: nowIso,
+          }
+        ];
+        
+        // Generate title from first user message if it's still "New Chat"
+        let title = chatDoc.data().title;
+        if (title === 'New Chat' && currentMessages.length === 0) {
+          title = deriveTitle(userMessage.content);
+        }
+        
+        // Update chat document with user message
+        await updateDoc(chatRef, {
+          messages: updatedMessages,
+          title: title,
           updatedAt: nowIso,
-          title: current.title && current.title !== 'New Chat' ? current.title : deriveTitle(userMessage.content),
         });
+        
+        // Update thread metadata
+        const tRef = doc(db, 'threads', threadId);
+        await updateDoc(tRef, { title, updatedAt: nowIso });
       }
 
       // Get AI response
@@ -502,14 +551,27 @@ export default function Dashboard({ user }) {
         content: response.data.reply,
       };
 
-             // Save assistant message to Firestore
-      await addDoc(collection(db, 'chats'), {
-        userId: user.uid,
-        threadId,
-        role: 'assistant',
-        content: assistantMessage.content,
-        timestamp: new Date().toISOString(),
-      });
+      // Save assistant message to chat document
+      const assistantTimestamp = new Date().toISOString();
+      const finalChatRef = doc(db, 'chats', threadId);
+      const finalChatDoc = await getDoc(finalChatRef);
+      
+      if (finalChatDoc.exists()) {
+        const currentMessages = finalChatDoc.data().messages || [];
+        const updatedMessages = [
+          ...currentMessages,
+          {
+            role: 'ai',
+            text: assistantMessage.content,
+            timestamp: assistantTimestamp,
+          }
+        ];
+        
+        await updateDoc(finalChatRef, {
+          messages: updatedMessages,
+          updatedAt: assistantTimestamp,
+        });
+      }
              // Track analytics
              try { await trackChat(user.uid); } catch (e) { console.warn('trackChat failed', e); }
       await updateDoc(doc(db, 'threads', threadId), { updatedAt: new Date().toISOString() });
@@ -847,17 +909,40 @@ export default function Dashboard({ user }) {
                   
                   <div className="space-y-1 max-h-60 overflow-y-auto">
                     {threads.slice(0, 10).map((thread) => (
-                      <button
+                      <motion.button
                         key={thread.id}
-                        onClick={() => { setActiveThreadId(thread.id); setSidebarOpen(false); }}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                        onClick={() => { handleChatSwitch(thread.id); setSidebarOpen(false); }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className={`group relative w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
                           activeThreadId === thread.id
-                            ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                            ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 shadow-sm'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-sm'
                         }`}
+                        title={thread.title || 'New Chat'}
                       >
-                        <div className="truncate">{thread.title || 'New Chat'}</div>
-                      </button>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-primary-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <div className="flex-1 min-w-0">
+                            <div className="truncate font-medium">{thread.title || 'New Chat'}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {new Date(thread.updatedAt).toLocaleDateString([], { 
+                                month: 'short', 
+                                day: 'numeric'
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Active indicator */}
+                        {activeThreadId === thread.id && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="absolute right-2 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-primary-500 rounded-full"
+                          />
+                        )}
+                      </motion.button>
                     ))}
                   </div>
                 </div>
@@ -1117,16 +1202,44 @@ export default function Dashboard({ user }) {
                         </div>
                       ) : (
                         <>
-                          <button
-                            onClick={() => setActiveThreadId(t.id)}
-                            className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                          <motion.button
+                            onClick={() => handleChatSwitch(t.id)}
+                            whileHover={{ 
+                              scale: 1.02,
+                              x: 4
+                            }}
+                            whileTap={{ scale: 0.98 }}
+                            className={`group relative w-full text-left px-3 py-2 rounded-md text-sm transition-all duration-200 ${
                               activeThreadId === t.id
-                                ? 'bg-primary-50 dark:bg-gray-700 text-primary-700 dark:text-white'
-                                : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-200'
+                                ? 'bg-primary-50 dark:bg-gray-700 text-primary-700 dark:text-white shadow-sm'
+                                : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-200 hover:shadow-sm'
                             }`}
+                            title={t.title || 'New Chat'} // Tooltip for full title
                           >
-                            <div className="truncate pr-8">{t.title || 'New Chat'}</div>
-                          </button>
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-primary-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              <div className="flex-1 min-w-0">
+                                <div className="truncate pr-8 font-medium">{t.title || 'New Chat'}</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                  {new Date(t.updatedAt).toLocaleDateString([], { 
+                                    month: 'short', 
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Active indicator */}
+                            {activeThreadId === t.id && (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="absolute right-2 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-primary-500 rounded-full"
+                              />
+                            )}
+                          </motion.button>
                           
                           {/* Three dots menu - only show on hover */}
                           {hoveredThread === t.id && (
@@ -1232,6 +1345,20 @@ export default function Dashboard({ user }) {
               {/* Messages Container */}
               <div className="flex-1 overflow-y-auto px-6 py-6">
                 <div className="max-w-4xl mx-auto space-y-6">
+                  {/* Chat switching loader */}
+                  {switchingChat && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex items-center justify-center py-8"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Loading chat...</span>
+                      </div>
+                    </motion.div>
+                  )}
                   {messages.length === 0 ? (
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
