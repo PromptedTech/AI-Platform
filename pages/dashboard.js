@@ -582,12 +582,12 @@ export default function Dashboard({ user }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+    <div className="min-h-screen bg-gradient-modern transition-all duration-300">
       {/* Modern Top Navigation */}
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-0 z-50"
+        className="glass-strong sticky top-0 z-50 border-b border-glass"
       >
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -616,12 +616,12 @@ export default function Dashboard({ user }) {
 
               {/* Logo and Brand */}
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
                   <Sparkles className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900 dark:text-white">Nova AI</h1>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Powered by GPT-4</p>
+                  <h1 className="text-xl font-bold text-white">Nova AI</h1>
+                  <p className="text-xs text-white/80">Powered by GPT-4</p>
                 </div>
               </div>
             </div>
@@ -629,11 +629,11 @@ export default function Dashboard({ user }) {
             {/* Center: Current Chat Title */}
             <div className="flex-1 max-w-md mx-8 hidden sm:block">
               <div className="text-center">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                <h2 className="text-lg font-semibold text-white truncate">
                   {getCurrentChatTitle()}
                 </h2>
                 {activePersona && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-white/70">
                     Chatting with {activePersona.name}
                   </p>
                 )}
@@ -648,7 +648,7 @@ export default function Dashboard({ user }) {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setShowCreditsModal(true)}
-                  className="hidden sm:flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300"
+                  className="hidden sm:flex items-center gap-2 px-3 py-2 glass rounded-lg hover:glass-strong transition-all duration-200 text-white"
                   title="Get more credits"
                 >
                   <Coins className="w-4 h-4" />
@@ -661,7 +661,7 @@ export default function Dashboard({ user }) {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={toggleTheme}
-                className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                className="p-2 text-white/80 hover:text-white hover:glass rounded-lg transition-all duration-200"
                 title={isDark ? 'Light Mode' : 'Dark Mode'}
               >
                 {isDark ? (
@@ -680,7 +680,7 @@ export default function Dashboard({ user }) {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowFeedbackModal(true)}
-                className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                className="p-2 text-white/80 hover:text-white hover:glass rounded-lg transition-all duration-200"
                 title="Report Bug / Feedback"
               >
                 <Bug className="w-5 h-5" />
@@ -691,7 +691,7 @@ export default function Dashboard({ user }) {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => router.push('/profile')}
-                className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                className="p-2 text-white/80 hover:text-white hover:glass rounded-lg transition-all duration-200"
                 title="View Profile"
               >
                 <User className="w-5 h-5" />
@@ -702,7 +702,7 @@ export default function Dashboard({ user }) {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleLogout}
-                className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors text-sm"
+                className="px-3 py-2 bg-red-500/90 hover:bg-red-600 text-white rounded-lg font-medium transition-all duration-200 text-sm glass"
               >
                 <LogOut className="w-4 h-4 sm:hidden" />
                 <span className="hidden sm:inline">Logout</span>
@@ -729,7 +729,7 @@ export default function Dashboard({ user }) {
               animate={{ x: 0 }}
               exit={{ x: -320 }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed left-0 top-0 h-full w-80 bg-white dark:bg-gray-800 shadow-xl z-50 md:hidden flex flex-col"
+              className="fixed left-0 top-0 h-full w-80 glass-dark shadow-xl z-50 md:hidden flex flex-col"
             >
               {/* Mobile Sidebar Content */}
               <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
@@ -849,7 +849,7 @@ export default function Dashboard({ user }) {
         <motion.aside
           initial={{ width: 256 }}
           animate={{ width: sidebarCollapsed ? 64 : 256 }}
-          className="shrink-0 hidden md:flex md:flex-col bg-white dark:bg-gray-800 rounded-lg shadow-md h-[calc(100vh-180px)] transition-all duration-300 overflow-hidden"
+          className="shrink-0 hidden md:flex md:flex-col glass rounded-xl shadow-lg h-[calc(100vh-180px)] transition-all duration-300 overflow-hidden border-glass"
         >
           {/* Navigation Header */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
@@ -1073,9 +1073,9 @@ export default function Dashboard({ user }) {
         <div className="flex-1 min-w-0">
           {activeTab === 'chat' ? (
             // Modern Chat Interface
-            <div className="relative w-full h-[calc(100vh-180px)] overflow-hidden">
-            {/* Background with subtle gradient */}
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"></div>
+            <div className="relative w-full h-[calc(100vh-180px)] overflow-hidden glass rounded-xl border-glass">
+            {/* Background with subtle gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-purple-500/10 rounded-xl"></div>
             
             {/* Main Chat Container */}
             <div className="relative h-full flex flex-col">
@@ -1086,7 +1086,7 @@ export default function Dashboard({ user }) {
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    className="bg-gradient-to-r from-primary-500/10 to-purple-500/10 dark:from-primary-500/20 dark:to-purple-500/20 border-b border-primary-200/50 dark:border-primary-700/50 p-4"
+                    className="glass-strong border-b border-glass p-4 mx-4 mt-4 rounded-lg"
                   >
                     <div className="flex items-center gap-3 max-w-4xl mx-auto">
                       {activePersona.avatar && (
@@ -1122,7 +1122,7 @@ export default function Dashboard({ user }) {
               </AnimatePresence>
 
               {/* Messages Container */}
-              <div className="flex-1 overflow-y-auto px-4 py-6">
+              <div className="flex-1 overflow-y-auto px-6 py-6">
                 <div className="max-w-4xl mx-auto space-y-6">
                   {messages.length === 0 ? (
                     <motion.div
@@ -1226,10 +1226,10 @@ export default function Dashboard({ user }) {
                             {/* Message Bubble */}
                             <div className="flex flex-col gap-1">
                               <div
-                                className={`relative px-4 py-3 rounded-2xl shadow-sm ${
+                                className={`relative px-4 py-3 rounded-2xl shadow-lg ${
                                   message.role === 'user'
-                                    ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white rounded-br-md'
-                                    : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-md border border-gray-200 dark:border-gray-700'
+                                    ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-br-md'
+                                    : 'glass text-white rounded-bl-md border-glass'
                                 }`}
                               >
                                 {message.role === 'user' ? (
@@ -1287,10 +1287,10 @@ export default function Dashboard({ user }) {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
                           </div>
-                          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
+                          <div className="glass border-glass rounded-2xl rounded-bl-md px-4 py-3 shadow-lg">
                             <TypingAnimation />
                             {thinkElapsed > 0 && (
-                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              <div className="text-xs text-white/70 mt-1">
                                 Processing for {thinkElapsed}s...
                               </div>
                             )}
@@ -1307,7 +1307,7 @@ export default function Dashboard({ user }) {
                       animate={{ opacity: 1 }}
                       className="flex justify-start"
                     >
-                      <div className="text-xs text-gray-500 dark:text-gray-400 px-2">
+                      <div className="text-xs text-white/70 px-2">
                         ✓ Replied in {lastResponseTime}s
                       </div>
                     </motion.div>
@@ -1423,7 +1423,7 @@ export default function Dashboard({ user }) {
                   </div>
 
                   {/* Input Form */}
-                  <form onSubmit={handleChatSubmit} className="relative">
+                  <form onSubmit={handleChatSubmit} className="relative px-6 pb-6">
                     <div className="flex items-end gap-3">
                       <div className="flex-1 relative">
                         <textarea
@@ -1440,7 +1440,7 @@ export default function Dashboard({ user }) {
                           placeholder="Type your message... (Enter to send, Shift+Enter for new line)"
                           disabled={chatLoading}
                           rows={1}
-                          className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:bg-gray-100 dark:disabled:bg-gray-800 resize-none transition-all duration-200"
+                          className="w-full px-4 py-3 pr-12 glass border-glass rounded-2xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent disabled:opacity-50 resize-none transition-all duration-200"
                           style={{
                             minHeight: '48px',
                             maxHeight: '120px',
@@ -1453,7 +1453,7 @@ export default function Dashboard({ user }) {
                             }
                           }}
                         />
-                        <div className="absolute bottom-2 right-3 text-xs text-gray-400 dark:text-gray-500">
+                        <div className="absolute bottom-2 right-3 text-xs text-white/60">
                           {chatInput.length}/2000
                         </div>
                       </div>
@@ -1463,7 +1463,7 @@ export default function Dashboard({ user }) {
                         disabled={chatLoading || !chatInput.trim() || credits < 1}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-primary-600 to-purple-600 text-white rounded-2xl hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 dark:ring-offset-gray-800 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                        className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-2xl hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -1471,7 +1471,7 @@ export default function Dashboard({ user }) {
                       </motion.button>
                     </div>
                     
-                    <div className="mt-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <div className="mt-2 flex items-center justify-between text-xs text-white/60">
                       <div className="flex items-center gap-4">
                         <span>Enter to send</span>
                         <span>Shift+Enter for new line</span>
