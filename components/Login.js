@@ -1,5 +1,5 @@
 // Login Component with Email/Password and Google Sign-in
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../lib/firebase';
 
@@ -8,6 +8,23 @@ export default function Login({ onSwitchToSignup }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Debug Firebase configuration
+  const debugFirebase = () => {
+    console.log('Firebase Config Debug:', {
+      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? 'Set' : 'Missing',
+      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ? 'Set' : 'Missing',
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? 'Set' : 'Missing',
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ? 'Set' : 'Missing',
+      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ? 'Set' : 'Missing',
+      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ? 'Set' : 'Missing',
+    });
+  };
+
+  // Run debug on component mount
+  useEffect(() => {
+    debugFirebase();
+  }, []);
 
   // Handle email/password login
   const handleEmailLogin = async (e) => {
@@ -19,7 +36,18 @@ export default function Login({ onSwitchToSignup }) {
       await signInWithEmailAndPassword(auth, email, password);
       // User will be redirected automatically via auth state listener
     } catch (err) {
-      setError(err.message);
+      console.error('Login error:', err);
+      if (err.code === 'auth/user-not-found') {
+        setError('No account found with this email. Please sign up first.');
+      } else if (err.code === 'auth/wrong-password') {
+        setError('Incorrect password. Please try again.');
+      } else if (err.code === 'auth/invalid-credential') {
+        setError('Invalid credentials. Please check your email and password.');
+      } else if (err.code === 'auth/invalid-email') {
+        setError('Invalid email address format.');
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -34,7 +62,14 @@ export default function Login({ onSwitchToSignup }) {
       await signInWithPopup(auth, googleProvider);
       // User will be redirected automatically via auth state listener
     } catch (err) {
-      setError(err.message);
+      console.error('Google login error:', err);
+      if (err.code === 'auth/popup-closed-by-user') {
+        setError('Google sign-in was cancelled.');
+      } else if (err.code === 'auth/popup-blocked') {
+        setError('Google sign-in popup was blocked. Please allow popups and try again.');
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
