@@ -42,7 +42,16 @@ export default function Signup({ onSwitchToLogin }) {
 
       // User will be redirected automatically via auth state listener
     } catch (err) {
-      setError(err.message);
+      console.error('Signup error:', err);
+      if (err.code === 'auth/email-already-in-use') {
+        setError('This email is already registered. Please sign in instead.');
+      } else if (err.code === 'auth/invalid-email') {
+        setError('Invalid email address format.');
+      } else if (err.code === 'auth/weak-password') {
+        setError('Password is too weak. Please choose a stronger password.');
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -64,7 +73,14 @@ export default function Signup({ onSwitchToLogin }) {
 
       // User will be redirected automatically via auth state listener
     } catch (err) {
-      setError(err.message);
+      console.error('Google signup error:', err);
+      if (err.code === 'auth/popup-closed-by-user') {
+        setError('Google sign-in was cancelled.');
+      } else if (err.code === 'auth/popup-blocked') {
+        setError('Google sign-in popup was blocked. Please allow popups and try again.');
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
