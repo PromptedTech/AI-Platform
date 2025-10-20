@@ -173,3 +173,4 @@ For issues or questions, please open an issue on the GitHub repository.
 
 # Deployment trigger - Sat Oct 18 05:35:34 IST 2025
 # Mobile optimization update
+# Fix deployment issues
