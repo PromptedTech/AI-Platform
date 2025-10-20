@@ -1012,7 +1012,7 @@ export default function Dashboard({ user }) {
   };
 
   return (
-    <div className="min-h-screen transition-all duration-400" style={{ background: 'var(--bg-gradient)' }}>
+    <div className="min-h-screen transition-all duration-400 pb-safe" style={{ background: 'var(--bg-gradient)' }}>
       {/* Skip Link */}
       <a 
         href="#main-content" 
@@ -1033,11 +1033,11 @@ export default function Dashboard({ user }) {
         }}
         role="banner"
       >
-        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+        <div className="max-w-full mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 md:h-16">
             
             {/* Left: Logo and Menu Toggle */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4">
               {/* Mobile Menu Button */}
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -1059,12 +1059,12 @@ export default function Dashboard({ user }) {
               </motion.button>
 
               {/* Logo and Brand */}
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <Sparkles className="w-6 h-6 text-white" />
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Sparkles className="w-4 h-4 md:w-6 md:h-6 text-white" />
                 </div>
-                <div>
-                  <h1 className="text-xl font-bold text-white">Nova AI</h1>
+                <div className="hidden sm:block">
+                  <h1 className="text-lg md:text-xl font-bold text-white">Nova AI</h1>
                   <p className="text-xs text-white/80">Powered by GPT-4</p>
                 </div>
               </div>
@@ -1085,7 +1085,7 @@ export default function Dashboard({ user }) {
             </div>
 
             {/* Right: Action Buttons */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 md:gap-2">
               {/* Credits Display */}
               {typeof credits === 'number' && (
                 <motion.button
@@ -1109,11 +1109,11 @@ export default function Dashboard({ user }) {
                 title={isDark ? 'Light Mode' : 'Dark Mode'}
               >
                 {isDark ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                   </svg>
                 ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                   </svg>
                 )}
@@ -1127,7 +1127,7 @@ export default function Dashboard({ user }) {
                 className="p-2 text-white/80 hover:text-white hover:glass rounded-lg transition-all duration-200"
                 title="Report Bug / Feedback"
               >
-                <Bug className="w-5 h-5" />
+                <Bug className="w-4 h-4 md:w-5 md:h-5" />
               </motion.button>
 
               {/* Theme Button */}
@@ -1138,7 +1138,7 @@ export default function Dashboard({ user }) {
                 className="p-2 text-white/80 hover:text-white hover:glass rounded-lg transition-all duration-200"
                 title="Change Theme"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z" />
                 </svg>
               </motion.button>
@@ -1151,7 +1151,7 @@ export default function Dashboard({ user }) {
                 className="p-2 text-white/80 hover:text-white hover:glass rounded-lg transition-all duration-200"
                 title="View Profile"
               >
-                <User className="w-5 h-5" />
+                <User className="w-4 h-4 md:w-5 md:h-5" />
               </motion.button>
 
               {/* Logout Button */}
@@ -1739,7 +1739,7 @@ export default function Dashboard({ user }) {
         <div className="flex-1 min-w-0">
           {activeTab === 'chat' ? (
             // Modern Chat Interface
-            <div className="relative w-full h-[calc(100vh-180px)] overflow-hidden backdrop-blur-xl rounded-2xl shadow-xl border transition-all duration-400" style={{ 
+            <div className="relative w-full h-[calc(100vh-140px)] md:h-[calc(100vh-180px)] overflow-hidden backdrop-blur-xl rounded-none md:rounded-2xl shadow-xl border transition-all duration-400" style={{ 
               backgroundColor: 'var(--glass-bg)', 
               borderColor: 'var(--border-color)'
             }}>
@@ -1818,24 +1818,24 @@ export default function Dashboard({ user }) {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.6 }}
-                      className="text-center py-20"
+                      className="text-center py-12 md:py-20 flex flex-col items-center justify-center h-full"
                     >
-                      <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-primary-500 to-purple-500 rounded-2xl flex items-center justify-center">
-                        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 md:mb-6 bg-gradient-to-br from-primary-500 to-purple-500 rounded-2xl flex items-center justify-center">
+                        <svg className="w-6 h-6 md:w-8 md:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                         </svg>
                       </div>
-                      <h3 className="text-xl font-semibold text-[#e5e7eb] mb-2">
+                      <h3 className="text-lg md:text-xl font-semibold text-[#e5e7eb] mb-2">
                         Start a conversation with AI
                       </h3>
-                      <p className="text-[#9ca3af] mb-8">
+                      <p className="text-sm md:text-base text-[#9ca3af] mb-6 md:mb-8">
                         Ask anything you'd like to know!
                       </p>
                       <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => setShowChatTemplates(!showChatTemplates)}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-purple-600 text-white font-medium rounded-xl hover:shadow-lg transition-all duration-200"
+                        className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-primary-600 to-purple-600 text-white font-medium rounded-xl hover:shadow-lg transition-all duration-200 text-sm md:text-base w-4/5 max-w-sm"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -1850,7 +1850,7 @@ export default function Dashboard({ user }) {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ duration: 0.3 }}
-                            className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4"
+                            className="mt-4 md:mt-8 grid grid-cols-1 gap-3 md:gap-4 w-full max-w-sm md:max-w-none"
                           >
                             {chatTemplates.map((template, index) => (
                               <motion.button
@@ -2122,9 +2122,9 @@ export default function Dashboard({ user }) {
               <div className="border-t border-[#1f2532] bg-transparent">
                 <div className="max-w-4xl mx-auto p-4 space-y-4">
                   {/* AI Persona & Controls */}
-                  <div className="flex flex-wrap items-center gap-4 text-xs">
+                  <div className="flex flex-col md:flex-row md:flex-wrap items-start md:items-center gap-2 md:gap-4 text-xs">
                     <div className="flex items-center gap-2">
-                      <span className="text-[#9ca3af] font-medium">AI:</span>
+                      <span className="text-[#9ca3af] font-medium hidden sm:inline">AI:</span>
                       <select
                         value={activePersona?.id || ''}
                         onChange={(e) => {
@@ -2150,7 +2150,7 @@ export default function Dashboard({ user }) {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <span className="text-[#9ca3af] font-medium">Model:</span>
+                      <span className="text-[#9ca3af] font-medium hidden sm:inline">Model:</span>
                       <select
                         value={chatModel}
                         onChange={(e) => {
@@ -2166,7 +2166,7 @@ export default function Dashboard({ user }) {
                       </select>
                     </div>
                     
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 hidden md:flex">
                       <span className="text-[#9ca3af] font-medium">Temp:</span>
                       <input
                         type="range"
@@ -2184,7 +2184,7 @@ export default function Dashboard({ user }) {
                       <span className="text-xs text-[#9ca3af] w-8 text-center">{temperature.toFixed(1)}</span>
                     </div>
                     
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 hidden md:flex">
                       <span className="text-[#9ca3af] font-medium">Tokens:</span>
                       <input
                         type="number"
@@ -2202,11 +2202,11 @@ export default function Dashboard({ user }) {
                   </div>
 
                   {/* Input Form */}
-                  <form onSubmit={handleChatSubmit} className="relative px-6 pb-6 bg-transparent transition-all duration-400" role="form" aria-label="Chat message form">
+                  <form onSubmit={handleChatSubmit} className="relative px-4 md:px-6 pb-4 md:pb-6 bg-transparent transition-all duration-400" role="form" aria-label="Chat message form">
                     <div className="max-w-4xl mx-auto">
                       {/* Refined Input Container */}
                       <motion.div
-                        className="relative flex items-end gap-3 px-4 py-3 rounded-2xl border transition-all duration-200 bg-[#121620] border-[#1f2532] text-[#e5e7eb] shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
+                        className="relative flex items-end gap-2 md:gap-3 px-3 md:px-4 py-3 rounded-xl md:rounded-2xl border transition-all duration-200 bg-[#121620] border-[#1f2532] text-[#e5e7eb] shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
                         whileFocus={{
                           ring: '1px',
                           ringColor: 'rgba(139, 92, 246, 0.4)'
@@ -2215,7 +2215,7 @@ export default function Dashboard({ user }) {
                         {/* Left Side - File Upload Button */}
                         <motion.button
                           type="button"
-                          className="flex-shrink-0 p-2 rounded-lg transition-all duration-200 text-zinc-400 hover:text-[#c4b5fd]"
+                          className="flex-shrink-0 p-2 rounded-lg transition-all duration-200 text-zinc-400 hover:text-[#c4b5fd] min-h-[44px] min-w-[44px] flex items-center justify-center"
                           whileHover={{ 
                             scale: 1.1, 
                             y: -1
@@ -2223,7 +2223,7 @@ export default function Dashboard({ user }) {
                           whileTap={{ scale: 0.95 }}
                           title="Attach file (coming soon)"
                         >
-                          <Paperclip className="w-5 h-5" />
+                          <Paperclip className="w-4 h-4 md:w-5 md:h-5" />
                         </motion.button>
 
                         {/* Center - Text Input */}
@@ -2255,7 +2255,7 @@ export default function Dashboard({ user }) {
                             }}
                             placeholder="Message Nova AI..."
                             disabled={chatLoading || credits < 1}
-                            className="w-full resize-none border-0 outline-none bg-transparent text-[#e5e7eb] placeholder:text-[#9ca3af]"
+                            className="w-full resize-none border-0 outline-none bg-transparent text-[#e5e7eb] placeholder:text-[#9ca3af] text-sm md:text-base"
                             style={{
                               fontSize: '16px',
                               lineHeight: '24px',
@@ -2277,11 +2277,11 @@ export default function Dashboard({ user }) {
                         </div>
 
                         {/* Right Side - Action Buttons */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 md:gap-2">
                           {/* Voice Input Button */}
                           <motion.button
                             type="button"
-                            className="flex-shrink-0 p-2 rounded-lg transition-all duration-200 text-zinc-400 hover:text-[#c4b5fd]"
+                            className="flex-shrink-0 p-2 rounded-lg transition-all duration-200 text-zinc-400 hover:text-[#c4b5fd] min-h-[44px] min-w-[44px] flex items-center justify-center"
                             whileHover={{ 
                               scale: 1.1, 
                               y: -1
@@ -2289,14 +2289,14 @@ export default function Dashboard({ user }) {
                             whileTap={{ scale: 0.95 }}
                             title="Voice input (coming soon)"
                           >
-                            <Mic className="w-5 h-5" />
+                            <Mic className="w-4 h-4 md:w-5 md:h-5" />
                           </motion.button>
 
                           {/* Send Button */}
                           <motion.button
                             type="submit"
                             disabled={!chatInput.trim() || chatLoading || credits < 1}
-                            className={`flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                            className={`flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
                               chatInput.trim() 
                                 ? 'bg-[#1a1f29] hover:ring-1 hover:ring-[#8b5cf6]/40' 
                                 : 'bg-[#6b7280]'
@@ -2336,12 +2336,12 @@ export default function Dashboard({ user }) {
                       </motion.div>
 
                       {/* Helper Text */}
-                      <div className="mt-3 flex items-center justify-between text-xs bg-transparent text-[#9ca3af]">
-                        <div className="flex items-center gap-4">
+                      <div className="mt-3 flex flex-col md:flex-row md:items-center md:justify-between text-xs bg-transparent text-[#9ca3af] gap-1 md:gap-0">
+                        <div className="flex items-center justify-center md:justify-start gap-2 md:gap-4">
                           <span>Enter to send</span>
-                          <span>Shift+Enter for new line</span>
+                          <span className="hidden sm:inline">Shift+Enter for new line</span>
                         </div>
-                        <span className="font-medium text-[#8b5cf6]/90">
+                        <span className="font-medium text-[#8b5cf6]/90 text-center md:text-right">
                           1 credit per message
                         </span>
                       </div>
@@ -2684,6 +2684,19 @@ export default function Dashboard({ user }) {
         isOpen={isThemeSelectorOpen} 
         onClose={() => setIsThemeSelectorOpen(false)} 
       />
+
+      {/* Mobile Floating New Chat Button */}
+      <motion.button
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={handleNewChat}
+        className="fixed bottom-20 right-4 md:hidden z-50 w-14 h-14 bg-gradient-to-r from-primary-600 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
+        title="Start New Chat"
+      >
+        <Plus className="w-6 h-6" />
+      </motion.button>
     </div>
   );
 }
