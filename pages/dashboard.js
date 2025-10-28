@@ -1034,76 +1034,149 @@ export default function Dashboard({ user }) {
       // This maintains conversation memory while saving tokens
       const lastMessages = updatedMessages.slice(-10); // Last 10 messages (5 pairs)
       
-      const response = await axios.post('/api/chat', {
-        messages: [...systemMessages, ...lastMessages],
-        model: chatModel,
-        temperature,
-        max_tokens: maxTokens,
-        uid: user.uid,
-        customPrompt: activePersona?.prompt || null, // Optional: send as separate field too
-      }, { signal: controller.signal });
-      if (response.data?.error) {
-        setChatError(response.data.error);
-      } else {
-      const assistantMessage = {
-        role: 'assistant',
-        content: response.data.reply,
-      };
+      // Stream response using SSE
+      let accumulatedContent = '';
+      const assistantMessageId = `assistant-${Date.now()}`;
+      
+      // Add placeholder message for streaming
+      setMessages([...updatedMessages, { 
+        role: 'assistant', 
+        content: '', 
+        id: assistantMessageId,
+        timestamp: new Date().toISOString(),
+        isTyping: true
+      }]);
 
-      // Save assistant message to chat document
-      const assistantTimestamp = new Date().toISOString();
-      const finalChatRef = doc(db, 'chats', threadId);
-      const finalChatDoc = await getDoc(finalChatRef);
-      
-      if (finalChatDoc.exists()) {
-        const currentMessages = finalChatDoc.data().messages || [];
-        const updatedMessages = [
-          ...currentMessages,
-          {
-            role: 'ai',
-            text: assistantMessage.content,
-            timestamp: assistantTimestamp,
-          }
-        ];
+      // Use fetch for EventSource-like streaming
+      const response = await fetch('/api/chat/stream', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [...systemMessages, ...lastMessages],
+          model: chatModel,
+          temperature,
+          max_tokens: maxTokens,
+          customPrompt: activePersona?.prompt || null,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error('Stream failed to start');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
         
-        await updateDoc(finalChatRef, {
-          messages: updatedMessages,
-          updatedAt: assistantTimestamp,
-        });
-      }
-             // Track analytics
-             try { await trackChat(user.uid); } catch (e) { console.warn('trackChat failed', e); }
-      await updateDoc(doc(db, 'threads', threadId), { updatedAt: new Date().toISOString() });
-      
-      // Start typing animation
-      setIsTyping(true);
-      setTypingMessage(response.data.reply);
-      
-      // Add assistant message with typing flag
-      setMessages([...updatedMessages, { ...assistantMessage, isTyping: true }]);
-      
-      // Mark user message as successful
-      setMessageStatuses(prev => ({ ...prev, [messageId]: 'success' }));
-      setPendingMessageId(null);
-      
-      // capture total time
-      const totalSecs = Math.max(1, Math.floor((Date.now() - thinkStartRef.current) / 1000));
-      setLastResponseTime(totalSecs);
-      // Save credit deduction to Firestore
-      try {
-        await deductCredits(user.uid, 1);
-      } catch (err) {
-        console.error('Error saving credit deduction:', err);
-      }
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.substring(6));
+              
+              if (data.type === 'token') {
+                accumulatedContent += data.content;
+                
+                // Update the message with accumulated content
+                setMessages(prev => {
+                  const newMessages = [...prev];
+                  const lastIndex = newMessages.length - 1;
+                  if (lastIndex >= 0 && newMessages[lastIndex].id === assistantMessageId) {
+                    newMessages[lastIndex] = {
+                      ...newMessages[lastIndex],
+                      content: accumulatedContent,
+                      isTyping: true
+                    };
+                  }
+                  return newMessages;
+                });
+              } else if (data.type === 'done') {
+                // Mark as not typing
+                setMessages(prev => {
+                  const newMessages = [...prev];
+                  const lastIndex = newMessages.length - 1;
+                  if (lastIndex >= 0 && newMessages[lastIndex].id === assistantMessageId) {
+                    newMessages[lastIndex] = {
+                      ...newMessages[lastIndex],
+                      isTyping: false
+                    };
+                  }
+                  return newMessages;
+                });
+                
+                // Save to Firestore
+                const assistantTimestamp = new Date().toISOString();
+                const finalChatRef = doc(db, 'chats', threadId);
+                const finalChatDoc = await getDoc(finalChatRef);
+                
+                if (finalChatDoc.exists()) {
+                  const currentMessages = finalChatDoc.data().messages || [];
+                  const updatedMessagesFirestore = [
+                    ...currentMessages,
+                    {
+                      role: 'ai',
+                      text: accumulatedContent,
+                      timestamp: assistantTimestamp,
+                    }
+                  ];
+                  
+                  await updateDoc(finalChatRef, {
+                    messages: updatedMessagesFirestore,
+                    updatedAt: assistantTimestamp,
+                  });
+                }
+                
+                // Track analytics
+                try { await trackChat(user.uid); } catch (e) { console.warn('trackChat failed', e); }
+                await updateDoc(doc(db, 'threads', threadId), { updatedAt: new Date().toISOString() });
+                
+                // Mark user message as successful
+                setMessageStatuses(prev => ({ ...prev, [messageId]: 'success' }));
+                setPendingMessageId(null);
+                
+                // Capture total time
+                const totalSecs = Math.max(1, Math.floor((Date.now() - thinkStartRef.current) / 1000));
+                setLastResponseTime(totalSecs);
+                
+                // Save credit deduction to Firestore
+                try {
+                  await deductCredits(user.uid, 1);
+                } catch (err) {
+                  console.error('Error saving credit deduction:', err);
+                }
+              } else if (data.type === 'error') {
+                throw new Error(data.error);
+              }
+            } catch (e) {
+              console.error('Error parsing SSE data:', e);
+            }
+          }
+        }
       }
 
     } catch (error) {
-      if (axios.isCancel(error) || error.message === 'canceled') {
+      if (error.name === 'AbortError') {
         console.log('Request canceled by user');
+        // Remove the streaming message
+        setMessages(prev => prev.filter(msg => msg.id !== assistantMessageId));
         return;
       }
       console.error('Error sending message:', error);
       setChatError('Failed to send message. Please try again.');
+      
+      // Remove the streaming message on error
+      setMessages(prev => prev.filter(msg => msg.id !== assistantMessageId));
       
       // Mark user message as error
       setMessageStatuses(prev => ({ ...prev, [messageId]: 'error' }));
@@ -2115,10 +2188,15 @@ export default function Dashboard({ user }) {
                                 {message.role === 'user' ? (
                                   <p className="whitespace-pre-wrap leading-relaxed pr-12 text-base font-medium">{message.content}</p>
                                 ) : message.isTyping ? (
-                                  <div className="pr-12">
-                                    <TypingMessage 
-                                      message={message.content} 
-                                      onComplete={() => handleTypingComplete(index)}
+                                  <div className="pr-12" aria-live="polite" aria-atomic="false">
+                                    <div className="prose prose-base max-w-none prose-headings:text-[#e5e7eb] prose-headings:font-semibold prose-p:text-[#e5e7eb] prose-p:font-normal prose-code:text-[#e5e7eb] prose-code:bg-[#1f2532] prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-[#121620] prose-pre:text-[#e5e7eb] prose-pre:border prose-pre:border-[#1f2532]">
+                                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                                    </div>
+                                    {/* Streaming cursor */}
+                                    <motion.span
+                                      className="inline-block w-2 h-5 bg-[#8b5cf6] ml-1 vertical-align-middle"
+                                      animate={{ opacity: [0, 1, 0] }}
+                                      transition={{ duration: 0.8, repeat: Infinity }}
                                     />
                                   </div>
                                 ) : (
