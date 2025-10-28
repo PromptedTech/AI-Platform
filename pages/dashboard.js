@@ -13,7 +13,7 @@ import { getChatTemplates, getImageTemplates } from '../lib/templates';
 import { getUserCredits, deductCredits } from '../lib/credits';
 import CreditsModal from '../components/CreditsModal';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Image as ImageIcon, Sparkles, Library, User, Coins, Clock, Zap, Bug, Menu, X, Home, Settings, LogOut, ChevronLeft, ChevronRight, Plus, Search, MoreVertical, Edit3, Trash2, Calendar, Clipboard, Check, Paperclip, Mic, Send } from 'lucide-react';
+import { MessageSquare, Image as ImageIcon, Sparkles, Library, User, Coins, Clock, Zap, Bug, Menu, X, Home, Settings, LogOut, ChevronLeft, ChevronRight, Plus, Search, MoreVertical, Edit3, Trash2, Calendar, Clipboard, Check, Paperclip, Mic, Send, RotateCcw, Square } from 'lucide-react';
 import FeedbackModal from '../components/FeedbackModal';
 import ShareButton from '../components/ShareButton';
 
@@ -366,6 +366,11 @@ export default function Dashboard({ user }) {
   const thinkStartRef = useRef(0);
   const [thinkElapsed, setThinkElapsed] = useState(0);
   const [lastResponseTime, setLastResponseTime] = useState(null);
+  
+  // Regenerate and stop generation state
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isStopRequested, setIsStopRequested] = useState(false);
+  const abortControllerRef = useRef(null);
 
   // Load user's threads (chat history)
   useEffect(() => {
@@ -775,6 +780,161 @@ export default function Dashboard({ user }) {
     return currentThread?.title || "New Chat";
   };
 
+  // Handle regenerate response
+  const handleRegenerateResponse = async (messageIndex) => {
+    if (!user) return;
+    
+    // Find the user message that triggered this AI response
+    if (messageIndex === 0 || messages[messageIndex - 1].role !== 'user') {
+      return; // Can't regenerate if there's no user message before this
+    }
+    
+    const userMessage = messages[messageIndex - 1];
+    
+    // Remove the old AI message
+    const updatedMessages = messages.slice(0, messageIndex);
+    setMessages(updatedMessages);
+    
+    // Check credits
+    if (typeof credits === 'number' && credits < 1) {
+      setChatError('Insufficient credits to regenerate response.');
+      return;
+    }
+    
+    // Deduct credit optimistically
+    const originalCredits = credits;
+    setCredits((prev) => (typeof prev === 'number' ? Math.max(prev - 1, 0) : prev));
+    
+    setChatError('');
+    setLastResponseTime(null);
+    setChatLoading(true);
+    setIsGenerating(true);
+    setIsStopRequested(false);
+    
+    // Start timing
+    setThinkElapsed(0);
+    thinkStartRef.current = Date.now();
+    if (thinkTimerRef.current) clearInterval(thinkTimerRef.current);
+    thinkTimerRef.current = setInterval(() => {
+      setThinkElapsed(Math.floor((Date.now() - thinkStartRef.current) / 1000));
+    }, 1000);
+    
+    try {
+      const systemMessages = activePersona?.prompt
+        ? [{ role: 'system', content: activePersona.prompt }]
+        : [];
+      
+      // Use messages up to the user message (excluding the regenerated AI response)
+      const lastMessages = updatedMessages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+      
+      // Create abort controller for stop functionality
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+      
+      const response = await axios.post('/api/chat', {
+        messages: [...systemMessages, ...lastMessages],
+        model: chatModel,
+        temperature,
+        max_tokens: maxTokens,
+        uid: user.uid,
+        customPrompt: activePersona?.prompt || null,
+      }, { signal: controller.signal });
+      
+      if (isStopRequested) {
+        return; // User stopped generation
+      }
+      
+      if (response.data?.error) {
+        setChatError(response.data.error);
+      } else {
+        const assistantMessage = {
+          role: 'assistant',
+          content: response.data.reply,
+        };
+        
+        const threadId = activeThreadId;
+        const assistantTimestamp = new Date().toISOString();
+        const chatRef = doc(db, 'chats', threadId);
+        const chatDoc = await getDoc(chatRef);
+        
+        if (chatDoc.exists()) {
+          const currentMessages = chatDoc.data().messages || [];
+          const updatedMessagesFirestore = [
+            ...currentMessages,
+            {
+              role: 'ai',
+              text: assistantMessage.content,
+              timestamp: assistantTimestamp,
+            }
+          ];
+          
+          await updateDoc(chatRef, {
+            messages: updatedMessagesFirestore,
+            updatedAt: assistantTimestamp,
+          });
+        }
+        
+        try { await trackChat(user.uid); } catch (e) { console.warn('trackChat failed', e); }
+        await updateDoc(doc(db, 'threads', threadId), { updatedAt: new Date().toISOString() });
+        
+        setIsTyping(true);
+        setTypingMessage(response.data.reply);
+        
+        setMessages([...updatedMessages, { ...assistantMessage, isTyping: true }]);
+        
+        const totalSecs = Math.max(1, Math.floor((Date.now() - thinkStartRef.current) / 1000));
+        setLastResponseTime(totalSecs);
+        
+        try {
+          await deductCredits(user.uid, 1);
+        } catch (err) {
+          console.error('Error saving credit deduction:', err);
+        }
+      }
+    } catch (error) {
+      if (axios.isCancel(error) || error.message === 'canceled') {
+        console.log('Request canceled by user');
+        return;
+      }
+      console.error('Error regenerating response:', error);
+      setChatError('Failed to regenerate response. Please try again.');
+      setCredits(originalCredits);
+      try {
+        const currentBalance = await getUserCredits(user.uid);
+        setCredits(currentBalance);
+      } catch (err) {
+        console.error('Error fetching credits:', err);
+      }
+    } finally {
+      setChatLoading(false);
+      setIsTyping(false);
+      setIsGenerating(false);
+      abortControllerRef.current = null;
+      if (thinkTimerRef.current) {
+        clearInterval(thinkTimerRef.current);
+        thinkTimerRef.current = null;
+      }
+    }
+  };
+  
+  // Handle stop generation
+  const handleStopGeneration = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    setIsStopRequested(true);
+    setIsGenerating(false);
+    setChatLoading(false);
+    setIsTyping(false);
+    if (thinkTimerRef.current) {
+      clearInterval(thinkTimerRef.current);
+      thinkTimerRef.current = null;
+    }
+  };
+  
   // Handle chat submission
   const handleChatSubmit = async (e) => {
     e.preventDefault();
@@ -814,6 +974,8 @@ export default function Dashboard({ user }) {
     setPendingMessageId(messageId);
     setChatInput('');
     setChatLoading(true);
+    setIsGenerating(true);
+    setIsStopRequested(false);
     // start timing
     setThinkElapsed(0);
     thinkStartRef.current = Date.now();
@@ -823,6 +985,9 @@ export default function Dashboard({ user }) {
     }, 1000);
 
     try {
+      // Create abort controller for stop functionality
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
       // Get current chat document and update it
       const chatRef = doc(db, 'chats', threadId);
       const chatDoc = await getDoc(chatRef);
@@ -876,7 +1041,7 @@ export default function Dashboard({ user }) {
         max_tokens: maxTokens,
         uid: user.uid,
         customPrompt: activePersona?.prompt || null, // Optional: send as separate field too
-      });
+      }, { signal: controller.signal });
       if (response.data?.error) {
         setChatError(response.data.error);
       } else {
@@ -933,6 +1098,10 @@ export default function Dashboard({ user }) {
       }
 
     } catch (error) {
+      if (axios.isCancel(error) || error.message === 'canceled') {
+        console.log('Request canceled by user');
+        return;
+      }
       console.error('Error sending message:', error);
       setChatError('Failed to send message. Please try again.');
       
@@ -951,6 +1120,8 @@ export default function Dashboard({ user }) {
     } finally {
       setChatLoading(false);
       setIsTyping(false);
+      setIsGenerating(false);
+      abortControllerRef.current = null;
       if (thinkTimerRef.current) {
         clearInterval(thinkTimerRef.current);
         thinkTimerRef.current = null;
@@ -1996,6 +2167,38 @@ export default function Dashboard({ user }) {
                                 </motion.button>
                               </div>
                               
+                              {/* Regenerate and Stop buttons for AI messages */}
+                              {message.role === 'assistant' && !message.isTyping && (
+                                <div className="flex items-center gap-2 mt-2">
+                                  <motion.button
+                                    onClick={() => handleRegenerateResponse(index)}
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100/80 dark:bg-slate-600/80 hover:bg-slate-200/80 dark:hover:bg-slate-500/80 text-slate-700 dark:text-slate-300 text-sm font-medium transition-all duration-200 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+                                    aria-label="Regenerate response"
+                                  >
+                                    <RotateCcw className="w-3.5 h-3.5" />
+                                    <span className="hidden sm:inline">Regenerate</span>
+                                  </motion.button>
+                                </div>
+                              )}
+                              
+                              {/* Stop generating button (shown when generating) */}
+                              {isGenerating && message.isTyping && (
+                                <div className="flex items-center gap-2 mt-2">
+                                  <motion.button
+                                    onClick={handleStopGeneration}
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-100/80 dark:bg-red-600/80 hover:bg-red-200/80 dark:hover:bg-red-500/80 text-red-700 dark:text-red-300 text-sm font-medium transition-all duration-200 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-red-400/50"
+                                    aria-label="Stop generating"
+                                  >
+                                    <Square className="w-3.5 h-3.5" />
+                                    <span className="hidden sm:inline">Stop generating</span>
+                                  </motion.button>
+                                </div>
+                              )}
+                              
                               {/* Timestamp and Status */}
                               <div className={`text-sm px-2 flex items-center gap-2 ${
                                 message.role === 'user' ? 'text-right justify-end' : 'text-left justify-start'
@@ -2063,12 +2266,27 @@ export default function Dashboard({ user }) {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
                           </div>
-                          <div className="glass border-glass rounded-2xl rounded-bl-md px-4 py-3 shadow-lg">
-                            <TypingAnimation />
-                            {thinkElapsed > 0 && (
-                              <div className="text-xs text-white/70 mt-1">
-                                Processing for {thinkElapsed}s...
-                              </div>
+                          <div className="flex flex-col gap-2">
+                            <div className="glass border-glass rounded-2xl rounded-bl-md px-4 py-3 shadow-lg">
+                              <TypingAnimation />
+                              {thinkElapsed > 0 && (
+                                <div className="text-xs text-white/70 mt-1">
+                                  Processing for {thinkElapsed}s...
+                                </div>
+                              )}
+                            </div>
+                            {/* Stop button during generation */}
+                            {isGenerating && (
+                              <motion.button
+                                onClick={handleStopGeneration}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-100/80 dark:bg-red-600/80 hover:bg-red-200/80 dark:hover:bg-red-500/80 text-red-700 dark:text-red-300 text-sm font-medium transition-all duration-200 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-red-400/50 self-start"
+                                aria-label="Stop generating"
+                              >
+                                <Square className="w-3.5 h-3.5" />
+                                <span className="hidden sm:inline">Stop generating</span>
+                              </motion.button>
                             )}
                           </div>
                         </div>
