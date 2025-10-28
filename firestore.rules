@@ -76,6 +76,19 @@ service cloud.firestore {
       allow update, delete: if isAuthenticated() && isOwner(resource.data.uid);
     }
     
+    // RAG Collections - users/{userId}/files, chunks, embeddings
+    match /users/{userId}/files/{fileId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+    
+    match /users/{userId}/chunks/{chunkId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+    
+    match /users/{userId}/embeddings/{embeddingId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+    
     // Feedback reports collection - users can submit feedback, only admins can read
     match /feedbackReports/{reportId} {
       allow create: if isAuthenticated();

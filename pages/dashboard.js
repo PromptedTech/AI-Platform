@@ -288,6 +288,12 @@ export default function Dashboard({ user }) {
   
   // Theme selector state
   const [isThemeSelectorOpen, setIsThemeSelectorOpen] = useState(false);
+  
+  // File upload and RAG state
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [useKnowledge, setUseKnowledge] = useState(false);
 
   // Refresh timestamps every minute
   useEffect(() => {
@@ -932,6 +938,67 @@ export default function Dashboard({ user }) {
     if (thinkTimerRef.current) {
       clearInterval(thinkTimerRef.current);
       thinkTimerRef.current = null;
+    }
+  };
+  
+  // Handle file upload
+  const handleFileUpload = async (files) => {
+    if (!user || !files || files.length === 0) return;
+    
+    setUploadLoading(true);
+    
+    try {
+      for (const file of files) {
+        // Convert file to base64
+        const base64Data = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result.split(',')[1]; // Remove data:type;base64, prefix
+            resolve(result);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        
+        // Upload file
+        const response = await axios.post('/api/upload', {
+          file: {
+            name: file.name,
+            type: file.type,
+            data: base64Data,
+          },
+          userId: user.uid,
+        });
+        
+        // Get embeddings for chunks
+        const chunksResponse = await axios.get(`/api/chunks?userId=${user.uid}&fileId=${response.data.fileId}`);
+        const chunks = chunksResponse.data.chunks.map(c => c.chunkText);
+        
+        // Generate embeddings
+        const embeddingsResponse = await axios.post('/api/embeddings', { chunks });
+        const embeddings = embeddingsResponse.data.embeddings;
+        
+        // Store embeddings with vector store
+        await axios.post('/api/store-embeddings', {
+          userId: user.uid,
+          fileId: response.data.fileId,
+          chunks,
+          embeddings,
+        });
+        
+        setUploadedFiles(prev => [...prev, {
+          id: response.data.fileId,
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          uploadedAt: new Date().toISOString(),
+        }]);
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      setChatError('Failed to upload file. Please try again.');
+    } finally {
+      setUploadLoading(false);
     }
   };
   
@@ -2509,18 +2576,34 @@ export default function Dashboard({ user }) {
                         }}
                       >
                         {/* Left Side - File Upload Button */}
-                        <motion.button
-                          type="button"
-                          className="flex-shrink-0 p-2 rounded-lg transition-all duration-200 text-zinc-400 hover:text-[#c4b5fd] min-h-[44px] min-w-[44px] flex items-center justify-center"
-                          whileHover={{ 
-                            scale: 1.1, 
-                            y: -1
+                        <label htmlFor="file-upload" className="cursor-pointer">
+                          <motion.button
+                            type="button"
+                            className="flex-shrink-0 p-2 rounded-lg transition-all duration-200 text-zinc-400 hover:text-[#c4b5fd] min-h-[44px] min-w-[44px] flex items-center justify-center"
+                            whileHover={{ 
+                              scale: 1.1, 
+                              y: -1
+                            }}
+                            whileTap={{ scale: 0.95 }}
+                            title="Upload file (PDF, DOCX, TXT, MD)"
+                          >
+                            <Paperclip className="w-4 h-4 md:w-5 md:h-5" />
+                          </motion.button>
+                        </label>
+                        <input
+                          id="file-upload"
+                          type="file"
+                          accept=".pdf,.docx,.doc,.txt,.md"
+                          multiple
+                          className="hidden"
+                          onChange={(e) => {
+                            const files = Array.from(e.target.files);
+                            if (files.length > 0) {
+                              handleFileUpload(files);
+                            }
                           }}
-                          whileTap={{ scale: 0.95 }}
-                          title="Attach file (coming soon)"
-                        >
-                          <Paperclip className="w-4 h-4 md:w-5 md:h-5" />
-                        </motion.button>
+                          disabled={uploadLoading}
+                        />
 
                         {/* Center - Text Input */}
                         <div className="flex-1 relative">
