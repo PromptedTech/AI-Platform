@@ -1,117 +1,61 @@
-// API endpoint for file uploads
-import { extractTextFromFile, getFileTypeCategory } from '../../lib/textExtraction';
-import { chunkText } from '../../lib/chunkText';
-import { db } from '../../lib/firebase';
-import { collection, addDoc, doc, getDoc, updateDoc, getDocs, query, where } from 'firebase/firestore';
+// Multipart file upload API using formidable
+import formidable from 'formidable';
+import path from 'path';
 
-// Max file size: 20MB
-const MAX_FILE_SIZE = 20 * 1024 * 1024;
+export const config = {
+  api: {
+    bodyParser: false,
+    sizeLimit: '25mb',
+  },
+};
 
 export default async function handler(req, res) {
-  // Basic diagnostics
-  try {
-    console.log('[api/upload] method:', req.method);
-    console.log('[api/upload] content-type:', req.headers?.['content-type']);
-  } catch {}
   if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { file, userId } = req.body;
-
-    if (!file || !userId) {
-      return res.status(400).json({ error: 'File and userId are required' });
-    }
-
-    // Parse file data from base64
-    const { name, type, data: base64Data } = file;
-    
-    // Validate file size
-    const fileSize = Buffer.from(base64Data || '', 'base64').length;
-    try { console.log('[api/upload] fileSize(bytes):', fileSize); } catch {}
-    if (fileSize > MAX_FILE_SIZE) {
-      return res.status(400).json({ 
-        error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB` 
-      });
-    }
-
-    // Convert base64 to blob
-    const binaryData = Buffer.from(base64Data, 'base64');
-    const blob = new Blob([binaryData], { type });
-
-    // Extract text
-    const text = await extractTextFromFile({
-      name,
-      type,
-      text: async () => blob.text(),
-      arrayBuffer: async () => blob.arrayBuffer(),
+    // Configure formidable to write to /tmp and keep extensions
+    const form = formidable({
+      multiples: false,
+      keepExtensions: true,
+      uploadDir: '/tmp',
+      maxFileSize: 25 * 1024 * 1024,
+      filter: (part) => part.name === 'file' || part.name === 'uid',
     });
 
-    if (!text || text.trim().length === 0) {
-      return res.status(400).json({ error: 'No text could be extracted from file' });
+    const { fields, files } = await new Promise((resolve, reject) => {
+      form.parse(req, (err, fields, files) => {
+        if (err) return reject(err);
+        return resolve({ fields, files });
+      });
+    });
+
+    const uid = typeof fields.uid === 'string' ? fields.uid : Array.isArray(fields.uid) ? fields.uid[0] : undefined;
+    const file = files.file;
+
+    if (!uid) {
+      return res.status(400).json({ error: 'Missing uid' });
+    }
+    if (!file) {
+      return res.status(400).json({ error: 'Missing file' });
     }
 
-    // Chunk the text
-    const chunks = chunkText(text, 500, 50);
+    // Support array or single file depending on formidable version/field usage
+    const f = Array.isArray(file) ? file[0] : file;
 
-    // Store file metadata
-    const fileMetadata = {
-      name,
-      type: getFileTypeCategory({ name, type }),
-      size: fileSize,
-      chunkCount: chunks.length,
-      createdAt: new Date().toISOString(),
+    const result = {
+      ok: true,
+      filename: path.basename(f.filepath || f.path || f.originalFilename || 'upload'),
+      mimetype: f.mimetype || f.mime || 'application/octet-stream',
+      size: typeof f.size === 'number' ? f.size : 0,
     };
 
-    let fileRef;
-    try {
-      fileRef = await addDoc(collection(db, 'users', userId, 'files'), fileMetadata);
-    } catch (e) {
-      console.error('[api/upload] Firestore write error (files):', e?.code || e?.message || e);
-      return res.status(500).json({ error: 'Firestore files write failed', details: e?.message || String(e) });
-    }
-    
-    // Store chunks with fileId reference
-    const chunkDocs = [];
-    try {
-      for (let i = 0; i < chunks.length; i++) {
-        await addDoc(collection(db, 'users', userId, 'chunks'), {
-          fileId: fileRef.id,
-          chunkIndex: i,
-          chunkText: chunks[i],
-          createdAt: new Date().toISOString(),
-        });
-      }
-    } catch (e) {
-      console.error('[api/upload] Firestore write error (chunks):', e?.code || e?.message || e);
-      return res.status(500).json({ error: 'Firestore chunks write failed', details: e?.message || String(e) });
-    }
-
-    return res.status(200).json({ 
-      fileId: fileRef.id,
-      chunks: chunks.length,
-      metadata: fileMetadata,
-    });
-
+    return res.status(200).json(result);
   } catch (error) {
-    console.error('Error uploading file:', error);
-    if (error?.code === 'permission-denied') {
-      console.error('[api/upload] permission-denied');
-    }
-    return res.status(500).json({ 
-      error: 'Failed to upload file',
-      details: error.message 
-    });
+    console.error('[api/upload] multipart error:', error);
+    return res.status(500).json({ error: 'Upload failed', details: error?.message || String(error) });
   }
 }
-
-// Recommend enabling multipart/size limit for large payloads via bodyParser
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '25mb',
-    },
-  },
-};
 
