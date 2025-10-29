@@ -293,6 +293,8 @@ export default function Dashboard({ user }) {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState('');
   const [useKnowledge, setUseKnowledge] = useState(false);
 
   // Refresh timestamps every minute
@@ -941,37 +943,30 @@ export default function Dashboard({ user }) {
     }
   };
   
-  // Handle file upload
+  // Handle file upload (multipart FormData to /api/upload)
   const handleFileUpload = async (files) => {
     if (!user || !files || files.length === 0) return;
-    
+    setUploadError('');
+    setUploadProgress(0);
     setUploadLoading(true);
-    
+
     try {
       for (const file of files) {
-        // Convert file to base64
-        const base64Data = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const result = reader.result.split(',')[1]; // Remove data:type;base64, prefix
-            resolve(result);
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-        
-        // Upload file
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('uid', user.uid);
+
         let response;
         try {
-          response = await axios.post('/api/upload', {
-            file: {
-              name: file.name,
-              type: file.type,
-              data: base64Data,
+          response = await axios.post('/api/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            onUploadProgress: (evt) => {
+              if (evt.total) {
+                const pct = Math.round((evt.loaded * 100) / evt.total);
+                setUploadProgress(pct);
+              }
             },
-            userId: user.uid,
           });
-          // Log response status/body for diagnostics
           console.log('[upload] status', response.status, response.data);
         } catch (err) {
           const status = err?.response?.status;
@@ -979,68 +974,38 @@ export default function Dashboard({ user }) {
           console.error('[upload] failed', status, data);
           if (status === 405 || status === 413) {
             setChatError('Method not allowed or payload too large — enable multipart + raise sizeLimit');
+          } else {
+            setChatError('Failed to upload file. Please try again.');
           }
-          if (data?.error && typeof data.error === 'string' && data.error.toLowerCase().includes('permission')) {
+          if (data?.error && String(data.error).toLowerCase().includes('permission')) {
             console.error('[upload] permission error (client)', data);
           }
           throw err;
         }
-        
-        // Get embeddings for chunks
-        let chunksResponse;
-        try {
-          chunksResponse = await axios.get(`/api/chunks?userId=${user.uid}&fileId=${response.data.fileId}`);
-          console.log('[chunks] status', chunksResponse.status, chunksResponse.data?.chunks?.length);
-        } catch (err) {
-          console.error('[chunks] failed', err?.response?.status, err?.response?.data);
-          if (err?.response?.data?.error?.toLowerCase?.().includes('permission')) {
-            console.error('[chunks] permission error (client)', err?.response?.data);
+
+        const { ok, filename, mimetype, size } = response.data || {};
+        if (!ok) {
+          setChatError('Upload failed.');
+          continue;
+        }
+
+        setUploadedFiles(prev => [
+          ...prev,
+          {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            name: filename || file.name,
+            type: mimetype || file.type,
+            size: typeof size === 'number' ? size : file.size,
+            uploadedAt: new Date().toISOString(),
           }
-          throw err;
-        }
-        const chunks = chunksResponse.data.chunks.map(c => c.chunkText);
-        
-        // Generate embeddings
-        let embeddingsResponse;
-        try {
-          embeddingsResponse = await axios.post('/api/embeddings', { chunks });
-          console.log('[embeddings] status', embeddingsResponse.status, Array.isArray(embeddingsResponse.data?.embeddings) ? embeddingsResponse.data.embeddings.length : 0);
-        } catch (err) {
-          console.error('[embeddings] failed', err?.response?.status, err?.response?.data);
-          throw err;
-        }
-        const embeddings = embeddingsResponse.data.embeddings;
-        
-        // Store embeddings with vector store
-        try {
-          const storeRes = await axios.post('/api/store-embeddings', {
-            userId: user.uid,
-            fileId: response.data.fileId,
-            chunks,
-            embeddings,
-          });
-          console.log('[store-embeddings] status', storeRes.status, storeRes.data);
-        } catch (err) {
-          console.error('[store-embeddings] failed', err?.response?.status, err?.response?.data);
-          if (err?.response?.data?.error?.toLowerCase?.().includes('permission')) {
-            console.error('[store-embeddings] permission error (client)', err?.response?.data);
-          }
-          throw err;
-        }
-        
-        setUploadedFiles(prev => [...prev, {
-          id: response.data.fileId,
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          uploadedAt: new Date().toISOString(),
-        }]);
+        ]);
       }
     } catch (error) {
       console.error('Error uploading file:', error);
-      setChatError('Failed to upload file. Please try again.');
+      setUploadError('Upload failed');
     } finally {
       setUploadLoading(false);
+      setUploadProgress(0);
     }
   };
   
@@ -2616,6 +2581,14 @@ export default function Dashboard({ user }) {
                           ring: '1px',
                           ringColor: 'rgba(139, 92, 246, 0.4)'
                         }}
+                        onDragOver={(e) => { e.preventDefault(); }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const files = Array.from(e.dataTransfer.files || []);
+                          if (files.length > 0) {
+                            handleFileUpload(files);
+                          }
+                        }}
                       >
                         {/* Left Side - File Upload Button */}
                         <label htmlFor="file-upload" className="cursor-pointer">
@@ -2675,7 +2648,7 @@ export default function Dashboard({ user }) {
                               }
                             }}
                             placeholder="Message Nova AI..."
-                            disabled={chatLoading || credits < 1}
+                            disabled={chatLoading || credits < 1 || uploadLoading}
                             className="w-full resize-none border-0 outline-none bg-transparent text-[#e5e7eb] placeholder:text-[#9ca3af] text-sm md:text-base"
                             style={{
                               fontSize: '16px',
@@ -2689,6 +2662,19 @@ export default function Dashboard({ user }) {
                             aria-label="Type your message"
                             rows={1}
                           />
+                          {uploadLoading && (
+                            <div className="absolute left-0 right-0 -bottom-2 h-1 bg-[#1f2532] rounded">
+                              <div
+                                className="h-1 bg-[#8b5cf6] rounded"
+                                style={{ width: `${Math.max(5, uploadProgress)}%` }}
+                                aria-label="Upload progress"
+                                aria-valuemin={0}
+                                aria-valuemax={100}
+                                aria-valuenow={uploadProgress}
+                                role="progressbar"
+                              />
+                            </div>
+                          )}
                           <div id="char-count" className="absolute bottom-0 right-0 text-xs text-[#9ca3af]" aria-live="polite">
                             {chatInput.length}/2000
                           </div>
@@ -2716,7 +2702,7 @@ export default function Dashboard({ user }) {
                           {/* Send Button */}
                           <motion.button
                             type="submit"
-                            disabled={!chatInput.trim() || chatLoading || credits < 1}
+                            disabled={!chatInput.trim() || chatLoading || credits < 1 || uploadLoading}
                             className={`flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
                               chatInput.trim() 
                                 ? 'bg-[#1a1f29] hover:ring-1 hover:ring-[#8b5cf6]/40' 
