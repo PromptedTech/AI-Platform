@@ -1108,6 +1108,33 @@ export default function Dashboard({ user }) {
         await updateDoc(tRef, { title, updatedAt: nowIso });
       }
 
+      // Build knowledge context (RAG) if files selected or useKnowledge enabled
+      let knowledgeMessages = [];
+      try {
+        if (selectedFiles.length > 0 || useKnowledge) {
+          const k = 6;
+          const fileIds = selectedFiles.map(f => f.id);
+          const searchRes = await axios.post('/api/search-embeds', {
+            userId: user.uid,
+            query: chatInput || '(no query text provided)'.trim(),
+            k,
+            fileIds,
+          });
+          const results = Array.isArray(searchRes.data?.results) ? searchRes.data.results : [];
+          if (results.length > 0) {
+            const context = results
+              .map((r, idx) => `【${idx + 1}】 ${r.chunkText}`)
+              .join('\n\n');
+            knowledgeMessages = [{
+              role: 'system',
+              content: `Use the following retrieved knowledge when answering. If irrelevant, say so. Cite snippets implicitly by content.\n\n${context}`,
+            }];
+          }
+        }
+      } catch (e) {
+        console.warn('RAG retrieval failed', e?.response?.data || e?.message || e);
+      }
+
       // Get AI response
       // Send custom prompt both as system message AND as customPrompt field for flexibility
       const systemMessages = activePersona?.prompt
@@ -1138,7 +1165,7 @@ export default function Dashboard({ user }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          messages: [...systemMessages, ...lastMessages],
+          messages: [...knowledgeMessages, ...systemMessages, ...lastMessages],
           model: chatModel,
           temperature,
           max_tokens: maxTokens,
@@ -1221,9 +1248,9 @@ export default function Dashboard({ user }) {
                   });
                 }
                 
-                // Track analytics
+                // Track analytics and sources used
                 try { await trackChat(user.uid); } catch (e) { console.warn('trackChat failed', e); }
-                await updateDoc(doc(db, 'threads', threadId), { updatedAt: new Date().toISOString() });
+                await updateDoc(doc(db, 'threads', threadId), { updatedAt: new Date().toISOString(), sources: selectedFiles.map(f => f.id) });
                 
                 // Mark user message as successful
                 setMessageStatuses(prev => ({ ...prev, [messageId]: 'success' }));
@@ -1283,6 +1310,8 @@ export default function Dashboard({ user }) {
         clearInterval(thinkTimerRef.current);
         thinkTimerRef.current = null;
       }
+        // Clear selected files after send
+        setSelectedFiles([]);
     }
   };
 
