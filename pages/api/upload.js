@@ -8,6 +8,11 @@ import { collection, addDoc, doc, getDoc, updateDoc, getDocs, query, where } fro
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
 export default async function handler(req, res) {
+  // Basic diagnostics
+  try {
+    console.log('[api/upload] method:', req.method);
+    console.log('[api/upload] content-type:', req.headers?.['content-type']);
+  } catch {}
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -23,7 +28,8 @@ export default async function handler(req, res) {
     const { name, type, data: base64Data } = file;
     
     // Validate file size
-    const fileSize = Buffer.from(base64Data, 'base64').length;
+    const fileSize = Buffer.from(base64Data || '', 'base64').length;
+    try { console.log('[api/upload] fileSize(bytes):', fileSize); } catch {}
     if (fileSize > MAX_FILE_SIZE) {
       return res.status(400).json({ 
         error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB` 
@@ -58,17 +64,28 @@ export default async function handler(req, res) {
       createdAt: new Date().toISOString(),
     };
 
-    const fileRef = await addDoc(collection(db, 'users', userId, 'files'), fileMetadata);
+    let fileRef;
+    try {
+      fileRef = await addDoc(collection(db, 'users', userId, 'files'), fileMetadata);
+    } catch (e) {
+      console.error('[api/upload] Firestore write error (files):', e?.code || e?.message || e);
+      return res.status(500).json({ error: 'Firestore files write failed', details: e?.message || String(e) });
+    }
     
     // Store chunks with fileId reference
     const chunkDocs = [];
-    for (let i = 0; i < chunks.length; i++) {
-      await addDoc(collection(db, 'users', userId, 'chunks'), {
-        fileId: fileRef.id,
-        chunkIndex: i,
-        chunkText: chunks[i],
-        createdAt: new Date().toISOString(),
-      });
+    try {
+      for (let i = 0; i < chunks.length; i++) {
+        await addDoc(collection(db, 'users', userId, 'chunks'), {
+          fileId: fileRef.id,
+          chunkIndex: i,
+          chunkText: chunks[i],
+          createdAt: new Date().toISOString(),
+        });
+      }
+    } catch (e) {
+      console.error('[api/upload] Firestore write error (chunks):', e?.code || e?.message || e);
+      return res.status(500).json({ error: 'Firestore chunks write failed', details: e?.message || String(e) });
     }
 
     return res.status(200).json({ 
@@ -79,10 +96,22 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Error uploading file:', error);
+    if (error?.code === 'permission-denied') {
+      console.error('[api/upload] permission-denied');
+    }
     return res.status(500).json({ 
       error: 'Failed to upload file',
       details: error.message 
     });
   }
 }
+
+// Recommend enabling multipart/size limit for large payloads via bodyParser
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '25mb',
+    },
+  },
+};
 

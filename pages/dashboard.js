@@ -961,30 +961,72 @@ export default function Dashboard({ user }) {
         });
         
         // Upload file
-        const response = await axios.post('/api/upload', {
-          file: {
-            name: file.name,
-            type: file.type,
-            data: base64Data,
-          },
-          userId: user.uid,
-        });
+        let response;
+        try {
+          response = await axios.post('/api/upload', {
+            file: {
+              name: file.name,
+              type: file.type,
+              data: base64Data,
+            },
+            userId: user.uid,
+          });
+          // Log response status/body for diagnostics
+          console.log('[upload] status', response.status, response.data);
+        } catch (err) {
+          const status = err?.response?.status;
+          const data = err?.response?.data;
+          console.error('[upload] failed', status, data);
+          if (status === 405 || status === 413) {
+            setChatError('Method not allowed or payload too large — enable multipart + raise sizeLimit');
+          }
+          if (data?.error && typeof data.error === 'string' && data.error.toLowerCase().includes('permission')) {
+            console.error('[upload] permission error (client)', data);
+          }
+          throw err;
+        }
         
         // Get embeddings for chunks
-        const chunksResponse = await axios.get(`/api/chunks?userId=${user.uid}&fileId=${response.data.fileId}`);
+        let chunksResponse;
+        try {
+          chunksResponse = await axios.get(`/api/chunks?userId=${user.uid}&fileId=${response.data.fileId}`);
+          console.log('[chunks] status', chunksResponse.status, chunksResponse.data?.chunks?.length);
+        } catch (err) {
+          console.error('[chunks] failed', err?.response?.status, err?.response?.data);
+          if (err?.response?.data?.error?.toLowerCase?.().includes('permission')) {
+            console.error('[chunks] permission error (client)', err?.response?.data);
+          }
+          throw err;
+        }
         const chunks = chunksResponse.data.chunks.map(c => c.chunkText);
         
         // Generate embeddings
-        const embeddingsResponse = await axios.post('/api/embeddings', { chunks });
+        let embeddingsResponse;
+        try {
+          embeddingsResponse = await axios.post('/api/embeddings', { chunks });
+          console.log('[embeddings] status', embeddingsResponse.status, Array.isArray(embeddingsResponse.data?.embeddings) ? embeddingsResponse.data.embeddings.length : 0);
+        } catch (err) {
+          console.error('[embeddings] failed', err?.response?.status, err?.response?.data);
+          throw err;
+        }
         const embeddings = embeddingsResponse.data.embeddings;
         
         // Store embeddings with vector store
-        await axios.post('/api/store-embeddings', {
-          userId: user.uid,
-          fileId: response.data.fileId,
-          chunks,
-          embeddings,
-        });
+        try {
+          const storeRes = await axios.post('/api/store-embeddings', {
+            userId: user.uid,
+            fileId: response.data.fileId,
+            chunks,
+            embeddings,
+          });
+          console.log('[store-embeddings] status', storeRes.status, storeRes.data);
+        } catch (err) {
+          console.error('[store-embeddings] failed', err?.response?.status, err?.response?.data);
+          if (err?.response?.data?.error?.toLowerCase?.().includes('permission')) {
+            console.error('[store-embeddings] permission error (client)', err?.response?.data);
+          }
+          throw err;
+        }
         
         setUploadedFiles(prev => [...prev, {
           id: response.data.fileId,
