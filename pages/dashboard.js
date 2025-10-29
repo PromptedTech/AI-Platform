@@ -984,7 +984,7 @@ export default function Dashboard({ user }) {
           throw err;
         }
 
-        const { ok, filename, mimetype, size } = response.data || {};
+        const { ok, filename, mimetype, size, fileId } = response.data || {};
         if (!ok) {
           setChatError('Upload failed.');
           continue;
@@ -997,6 +997,9 @@ export default function Dashboard({ user }) {
           size: typeof size === 'number' ? size : file.size,
           uploadedAt: new Date().toISOString(),
         };
+
+        // Prefer real Firestore fileId if provided
+        if (fileId) newFileItem.id = fileId;
 
         setUploadedFiles(prev => [
           ...prev,
