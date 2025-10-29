@@ -264,6 +264,7 @@ export default function Dashboard({ user }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [inputPulse, setInputPulse] = useState(false);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
   
   // Chat history management
   const [searchQuery, setSearchQuery] = useState('');
@@ -989,16 +990,21 @@ export default function Dashboard({ user }) {
           continue;
         }
 
+        const newFileItem = {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          name: filename || file.name,
+          type: mimetype || file.type,
+          size: typeof size === 'number' ? size : file.size,
+          uploadedAt: new Date().toISOString(),
+        };
+
         setUploadedFiles(prev => [
           ...prev,
-          {
-            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-            name: filename || file.name,
-            type: mimetype || file.type,
-            size: typeof size === 'number' ? size : file.size,
-            uploadedAt: new Date().toISOString(),
-          }
+          newFileItem
         ]);
+
+        // Auto-select newly uploaded file for this chat turn
+        setSelectedFiles(prev => [...prev, newFileItem]);
       }
     } catch (error) {
       console.error('Error uploading file:', error);
@@ -1006,14 +1012,16 @@ export default function Dashboard({ user }) {
     } finally {
       setUploadLoading(false);
       setUploadProgress(0);
+      // Clear the hidden input so selecting the same file again triggers onChange
+      try { if (fileInputRef.current) fileInputRef.current.value = ''; } catch {}
     }
   };
   
   // Handle chat submission
   const handleChatSubmit = async (e) => {
     e.preventDefault();
-    if (!chatInput.trim()) {
-      // Pulse animation for empty input
+    if (!chatInput.trim() && selectedFiles.length === 0) {
+      // Pulse animation for empty action
       setInputPulse(true);
       setTimeout(() => setInputPulse(false), 300);
       return;
@@ -1036,9 +1044,10 @@ export default function Dashboard({ user }) {
     const messageId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const userMessage = { 
       role: 'user', 
-      content: chatInput,
+      content: chatInput || '(Using attached knowledge)',
       id: messageId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      attachments: selectedFiles.map(f => ({ id: f.id, name: f.name, type: f.type, size: f.size }))
     };
     const threadId = await ensureActiveThread();
     const updatedMessages = [...messages, userMessage];
@@ -1077,6 +1086,7 @@ export default function Dashboard({ user }) {
             role: 'user',
             text: userMessage.content,
             timestamp: nowIso,
+            attachments: userMessage.attachments || []
           }
         ];
         
@@ -2611,6 +2621,7 @@ export default function Dashboard({ user }) {
                           accept=".pdf,.docx,.doc,.txt,.md"
                           multiple
                           className="hidden"
+                          ref={fileInputRef}
                           onChange={(e) => {
                             const files = Array.from(e.target.files);
                             if (files.length > 0) {
@@ -2648,7 +2659,7 @@ export default function Dashboard({ user }) {
                               }
                             }}
                             placeholder="Message Nova AI..."
-                            disabled={chatLoading || credits < 1 || uploadLoading}
+                            disabled={(chatLoading || credits < 1 || uploadLoading) && selectedFiles.length === 0}
                             className="w-full resize-none border-0 outline-none bg-transparent text-[#e5e7eb] placeholder:text-[#9ca3af] text-sm md:text-base"
                             style={{
                               fontSize: '16px',
@@ -2673,6 +2684,24 @@ export default function Dashboard({ user }) {
                                 aria-valuenow={uploadProgress}
                                 role="progressbar"
                               />
+                            </div>
+                          )}
+                          {/* Selected file chips */}
+                          {selectedFiles.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-2" aria-label="Attached files">
+                              {selectedFiles.map((f, i) => (
+                                <div key={`${f.id}-${i}`} className="flex items-center gap-2 px-2 py-1 rounded-md border border-[#1f2532] bg-[#0f141e] text-xs">
+                                  <span className="max-w-[160px] truncate" title={f.name}>{f.name}</span>
+                                  <button
+                                    type="button"
+                                    className="px-1 py-0.5 rounded hover:bg-[#1f2532]"
+                                    onClick={() => setSelectedFiles(prev => prev.filter((x) => x !== f))}
+                                    aria-label={`Remove ${f.name}`}
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              ))}
                             </div>
                           )}
                           <div id="char-count" className="absolute bottom-0 right-0 text-xs text-[#9ca3af]" aria-live="polite">
@@ -2702,9 +2731,9 @@ export default function Dashboard({ user }) {
                           {/* Send Button */}
                           <motion.button
                             type="submit"
-                            disabled={!chatInput.trim() || chatLoading || credits < 1 || uploadLoading}
+                            disabled={(chatInput.trim().length === 0 && selectedFiles.length === 0) || chatLoading || credits < 1 || uploadLoading}
                             className={`flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
-                              chatInput.trim() 
+                              (chatInput.trim() || selectedFiles.length > 0)
                                 ? 'bg-[#1a1f29] hover:ring-1 hover:ring-[#8b5cf6]/40' 
                                 : 'bg-[#6b7280]'
                             }`}
