@@ -445,7 +445,6 @@ export default function Dashboard({ user }) {
             content: msg.text || msg.content,
             timestamp: msg.timestamp || new Date().toISOString(),
           }));
-          console.log('Loading messages from new format:', messages);
           setMessages(messages);
           return;
         }
@@ -472,7 +471,6 @@ export default function Dashboard({ user }) {
             });
           }
         });
-        console.log('Loading messages from old format:', list);
         setMessages(list);
       }, (error) => {
         console.error('Error loading old format messages:', error);
@@ -886,7 +884,7 @@ export default function Dashboard({ user }) {
           });
         }
         
-        try { await trackChat(user.uid); } catch (e) { console.warn('trackChat failed', e); }
+        try { await trackChat(user.uid); } catch (e) { /* Tracking error ignored */ }
         await updateDoc(doc(db, 'threads', threadId), { updatedAt: new Date().toISOString() });
         
         setIsTyping(true);
@@ -905,7 +903,7 @@ export default function Dashboard({ user }) {
       }
     } catch (error) {
       if (axios.isCancel(error) || error.message === 'canceled') {
-        console.log('Request canceled by user');
+        // Request canceled by user - silent return
         return;
       }
       console.error('Error regenerating response:', error);
@@ -968,7 +966,6 @@ export default function Dashboard({ user }) {
               }
             },
           });
-          console.log('[upload] status', response.status, response.data);
         } catch (err) {
           const status = err?.response?.status;
           const data = err?.response?.data;
@@ -1135,7 +1132,7 @@ export default function Dashboard({ user }) {
           }
         }
       } catch (e) {
-        console.warn('RAG retrieval failed', e?.response?.data || e?.message || e);
+        // RAG retrieval failed - continue without knowledge
       }
 
       // Get AI response
@@ -1252,7 +1249,7 @@ export default function Dashboard({ user }) {
                 }
                 
                 // Track analytics and sources used
-                try { await trackChat(user.uid); } catch (e) { console.warn('trackChat failed', e); }
+                try { await trackChat(user.uid); } catch (e) { /* Tracking error ignored */ }
                 await updateDoc(doc(db, 'threads', threadId), { updatedAt: new Date().toISOString(), sources: selectedFiles.map(f => f.id) });
                 
                 // Mark user message as successful
@@ -1281,8 +1278,7 @@ export default function Dashboard({ user }) {
 
     } catch (error) {
       if (error.name === 'AbortError') {
-        console.log('Request canceled by user');
-        // Remove the streaming message
+        // Request canceled by user - silent cleanup
         setMessages(prev => prev.filter(msg => msg.id !== assistantMessageId));
         return;
       }
@@ -1359,7 +1355,7 @@ export default function Dashboard({ user }) {
         timestamp: newImage.timestamp,
       });
              // Track analytics
-             try { await trackImage(user.uid); } catch (e) { console.warn('trackImage failed', e); }
+             try { await trackImage(user.uid); } catch (e) { /* Tracking error ignored */ }
 
       setGeneratedImage(newImage);
       setImagePrompt(''); // Clear the prompt after successful generation

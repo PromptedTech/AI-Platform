@@ -1,4 +1,4 @@
-// Multipart file upload API using formidable
+// Multipart file upload API using formidable with lazy-loaded parsers
 import formidable from 'formidable';
 import path from 'path';
 import fs from 'fs/promises';
@@ -6,9 +6,11 @@ import OpenAI from 'openai';
 import { db } from '../../lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { chunkText } from '../../lib/chunkText';
-import pdfParse from 'pdf-parse';
-import mammoth from 'mammoth';
 import { withAuth } from '../../lib/authMiddleware';
+
+// Lazy load heavy dependencies only when needed
+let pdfParse = null;
+let mammoth = null;
 
 export const config = {
   api: {
@@ -58,13 +60,19 @@ async function handler(req, res) {
     const size = typeof f.size === 'number' ? f.size : 0;
     const buffer = await fs.readFile(filepath);
 
-    // Extract text
+    // Extract text with lazy-loaded parsers
     let text = '';
     try {
       if (mimetype.includes('pdf')) {
+        if (!pdfParse) {
+          pdfParse = (await import('pdf-parse')).default;
+        }
         const data = await pdfParse(buffer);
         text = data.text || '';
       } else if (mimetype.includes('word') || mimetype.includes('officedocument') || filepath.endsWith('.docx')) {
+        if (!mammoth) {
+          mammoth = await import('mammoth');
+        }
         const result = await mammoth.extractRawText({ buffer });
         text = result.value || '';
       } else if (mimetype.startsWith('text/') || filepath.endsWith('.txt') || filepath.endsWith('.md')) {
