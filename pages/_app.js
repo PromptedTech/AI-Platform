@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { trackLogin } from '../lib/analytics';
+import FirebaseSetupBanner from '../components/FirebaseSetupBanner';
 import '../styles/globals.css';
 
 function AppContent({ Component, pageProps }) {
@@ -32,6 +33,7 @@ function AppContent({ Component, pageProps }) {
 
   return (
     <ThemeProvider user={user}>
+      <FirebaseSetupBanner />
       <Component {...pageProps} user={user} />
     </ThemeProvider>
   );

@@ -1,14 +1,17 @@
 import Razorpay from 'razorpay';
+import { withAuth } from '../../../lib/authMiddleware';
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { amount, credits, userId } = req.body;
+    // User is authenticated - use req.user.uid instead of userId from body
+    const userId = req.user.uid;
+    const { amount, credits } = req.body;
 
-    if (!amount || !credits || !userId) {
+    if (!amount || !credits) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -57,3 +60,5 @@ export default async function handler(req, res) {
   }
 }
 
+// Export with authentication middleware
+export default withAuth(handler);

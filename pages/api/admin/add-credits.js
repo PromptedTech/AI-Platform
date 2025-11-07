@@ -1,12 +1,15 @@
 import { db } from '../../../lib/firebase';
 import { doc, setDoc, getDoc, increment, serverTimestamp } from 'firebase/firestore';
+import { withAdminAuth } from '../../../lib/adminMiddleware';
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
+    // Admin is authenticated - req.user contains admin info
+    const adminUserId = req.user.uid;
     const { userId, credits, reason } = req.body;
 
     if (!userId || !credits) {
@@ -46,3 +49,6 @@ export default async function handler(req, res) {
     });
   }
 }
+
+// Export with admin authentication middleware
+export default withAdminAuth(handler);

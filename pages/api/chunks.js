@@ -1,17 +1,20 @@
 // API endpoint to get chunks for a file
 import { db } from '../../lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import { withAuth } from '../../lib/authMiddleware';
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { userId, fileId } = req.query;
+    // User is authenticated - use req.user.uid
+    const userId = req.user.uid;
+    const { fileId } = req.query;
 
-    if (!userId || !fileId) {
-      return res.status(400).json({ error: 'userId and fileId are required' });
+    if (!fileId) {
+      return res.status(400).json({ error: 'fileId is required' });
     }
 
     const chunksRef = collection(db, 'users', userId, 'chunks');
@@ -34,3 +37,5 @@ export default async function handler(req, res) {
   }
 }
 
+// Export with authentication middleware
+export default withAuth(handler);

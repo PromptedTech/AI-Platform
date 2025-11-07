@@ -1,17 +1,20 @@
 import OpenAI from 'openai';
 import { searchSimilarChunks } from '../../lib/vectorStore';
+import { withAuth } from '../../lib/authMiddleware';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { userId, query, k = 6, fileIds = [] } = req.body || {};
-    if (!userId) return res.status(400).json({ error: 'userId required' });
+    // User is authenticated - use req.user.uid instead of userId from body
+    const userId = req.user.uid;
+    const { query, k = 6, fileIds = [] } = req.body || {};
+    
     if (!query || typeof query !== 'string') return res.status(400).json({ error: 'query required' });
     if (!process.env.OPENAI_API_KEY) return res.status(500).json({ error: 'Missing OPENAI_API_KEY' });
 
@@ -30,4 +33,5 @@ export default async function handler(req, res) {
   }
 }
 
-
+// Export with authentication middleware
+export default withAuth(handler);

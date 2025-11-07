@@ -1,5 +1,6 @@
 // API endpoint for generating embeddings
 import OpenAI from 'openai';
+import { withAuth } from '../../lib/authMiddleware';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -28,12 +29,14 @@ export async function generateEmbeddings(chunks) {
   }
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
+    // User is authenticated - req.user.uid is available
+    const userId = req.user.uid;
     const { chunks } = req.body;
 
     if (!chunks || !Array.isArray(chunks)) {
@@ -56,4 +59,7 @@ export default async function handler(req, res) {
     });
   }
 }
+
+// Export with authentication middleware
+export default withAuth(handler);
 

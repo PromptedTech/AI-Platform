@@ -1,17 +1,20 @@
 // API endpoint to store embeddings
 import { db } from '../../lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import { withAuth } from '../../lib/authMiddleware';
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { userId, fileId, chunks, embeddings } = req.body;
+    // User is authenticated - use req.user.uid instead of userId from body
+    const userId = req.user.uid;
+    const { fileId, chunks, embeddings } = req.body;
 
-    if (!userId || !fileId || !chunks || !embeddings) {
-      return res.status(400).json({ error: 'All fields are required' });
+    if (!fileId || !chunks || !embeddings) {
+      return res.status(400).json({ error: 'fileId, chunks, and embeddings are required' });
     }
 
     if (chunks.length !== embeddings.length) {
@@ -43,3 +46,5 @@ export default async function handler(req, res) {
   }
 }
 
+// Export with authentication middleware
+export default withAuth(handler);

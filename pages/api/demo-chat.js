@@ -1,10 +1,14 @@
 // Demo API endpoint that doesn't require OpenAI credits
-export default async function handler(req, res) {
+import { withOptionalAuth } from '../../lib/authMiddleware';
+
+async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
+    // User may or may not be authenticated - req.user is optional
+    const userId = req.user?.uid;
     const { messages } = req.body;
 
     if (!messages || !Array.isArray(messages)) {
@@ -55,3 +59,6 @@ export default async function handler(req, res) {
     });
   }
 }
+
+// Export with optional authentication (works with or without login)
+export default withOptionalAuth(handler);

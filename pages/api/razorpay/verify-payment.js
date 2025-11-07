@@ -1,23 +1,25 @@
 import crypto from 'crypto';
 import { db } from '../../../lib/firebase';
 import { doc, setDoc, getDoc, increment, serverTimestamp } from 'firebase/firestore';
+import { withAuth } from '../../../lib/authMiddleware';
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
+    // User is authenticated - use req.user.uid instead of userId from body
+    const userId = req.user.uid;
     const {
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
-      userId,
       credits,
       amount,
     } = req.body;
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !userId || !credits || !amount) {
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !credits || !amount) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -78,4 +80,7 @@ export default async function handler(req, res) {
     });
   }
 }
+
+// Export with authentication middleware
+export default withAuth(handler);
 

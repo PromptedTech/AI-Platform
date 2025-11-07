@@ -8,6 +8,7 @@ import { collection, addDoc } from 'firebase/firestore';
 import { chunkText } from '../../lib/chunkText';
 import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
+import { withAuth } from '../../lib/authMiddleware';
 
 export const config = {
   api: {
@@ -16,20 +17,23 @@ export const config = {
   },
 };
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
+    // User is authenticated - use req.user.uid instead of form field
+    const uid = req.user.uid;
+    
     // Configure formidable to write to /tmp and keep extensions
     const form = formidable({
       multiples: false,
       keepExtensions: true,
       uploadDir: '/tmp',
       maxFileSize: 25 * 1024 * 1024,
-      filter: (part) => part.name === 'file' || part.name === 'uid',
+      filter: (part) => part.name === 'file',
     });
 
     const { fields, files } = await new Promise((resolve, reject) => {
@@ -39,12 +43,8 @@ export default async function handler(req, res) {
       });
     });
 
-    const uid = typeof fields.uid === 'string' ? fields.uid : Array.isArray(fields.uid) ? fields.uid[0] : undefined;
     const file = files.file;
 
-    if (!uid) {
-      return res.status(400).json({ error: 'Missing uid' });
-    }
     if (!file) {
       return res.status(400).json({ error: 'Missing file' });
     }
@@ -90,7 +90,9 @@ export default async function handler(req, res) {
       type: mimetype,
       size,
       chunkCount: chunks.length,
+      extractedText: text.substring(0, 500), // Store preview
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     });
 
     // Store chunks + embeddings
@@ -118,3 +120,5 @@ export default async function handler(req, res) {
   }
 }
 
+// Export with authentication middleware
+export default withAuth(handler);
